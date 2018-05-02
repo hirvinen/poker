@@ -1,0 +1,45 @@
+{
+  "name": "poker",
+  "version": "1.0.0",
+  "description": "A simple poker game in React Native Web",
+  "main": "index.js",
+  "scripts": {
+    "test": "xo",
+    "dev": "next"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hirvinen/poker.git"
+  },
+  "keywords": [
+    "poker",
+    "game",
+    "react",
+    "react-native-web",
+    "next"
+  ],
+  "author": "Patrik Hirvinen <patrik.hirvinen@iki.fi>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hirvinen/poker/issues"
+  },
+  "homepage": "https://github.com/hirvinen/poker#readme",
+  "dependencies": {
+    "next": "^6.0.0",
+    "react": "^16.3.2",
+    "react-dom": "^16.3.2"
+  },
+  "devDependencies": {
+    "eslint": "^4.19.1",
+    "eslint-config-xo": "^0.22.0",
+    "eslint-config-xo-react": "^0.16.0",
+    "eslint-config-xo-space": "^0.18.0",
+    "eslint-plugin-react": "^7.7.0",
+    "xo": "^0.20.3"
+  },
+  "xo": {
+    "space": true,
+    "prettier": true,
+    "semicolon": false
+  }
+}
