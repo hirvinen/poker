@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "xo",
-    "dev": "next"
+    "dev": "next",
+    "build": "next build",
+    "start": "next start"
   },
   "repository": {
     "type": "git",
