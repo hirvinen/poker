@@ -2,8 +2,8 @@ import Header from './Header'
 import Head from 'next/head'
 
 const layoutStyle = {
-  margin: 20,
-  padding: 20,
+  margin: '1vw',
+  padding: '1vw',
   border: '1px solid #DDD'
 }
 

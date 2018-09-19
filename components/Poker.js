@@ -167,7 +167,7 @@ const basicCardStyle = {
   border: '1px solid black',
   margin: '0.1vw',
   textAlign: 'center',
-  fontSize: '5em',
+  fontSize: '1em',
   minWidth: cardWidth + cardSizeUnit,
   maxWidth: cardWidth + cardSizeUnit,
   minHeight: cardHeight + cardSizeUnit,
@@ -226,7 +226,8 @@ const BestHand = (props) => (
 const cellStyle = {
   display   : 'table-cell',
   minWidth  : '3vw',
-  textAlign : 'right'
+  textAlign : 'right',
+  fontSize  : '80%'
 }
 
 const cellStyleHL = {
@@ -513,11 +514,13 @@ class Game extends React.Component {
       return (
         <div style={tableStyle}>
           <CardSet cards={this.state.hand} title="Hand" />
+          <div style={{flexGrow: 0.5, minWidth: (0.5 * cardWidth) + cardSizeUnit}} />
           <CardStack
             cards={this.state.left}
             title="Left"
             onClick={(() => this.handleClick('left'))}
           />
+          <div style={{flexGrow: 0.5, minWidth: (0.5 * cardWidth) + cardSizeUnit}} />
           <CardStack
             cards={this.state.right}
             title="Right"
