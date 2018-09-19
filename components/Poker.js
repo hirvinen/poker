@@ -1,16 +1,14 @@
 const shuffle = require('lodash/shuffle')
 const map     = require('lodash/map')
 import {createDeck, Joker}    from '../lib/deck'
-import {wins, nullWin, bets}  from '../lib/quick_poker'
-import {round, logDeck}       from '../lib/helpers'
+import {wins, nullWin}        from '../lib/quick_poker'
+import {
+  round,
+  logDeck,
+  createBet,
+  getKeyboardHandler,
+}                             from '../lib/helpers'
 import classify               from './classify'
-
-
-
-const game = newGame()
-
-//const bestHandWithLeft  = bestHand(game.hand, game.left)
-//const bestHandWithRight = bestHand(game.hand, game.right)
 
 const cardWidth  = 16
 const cardHeight = 24
@@ -70,12 +68,6 @@ const CardStack = (props) => (
   </div>
 )
 
-const BestHand = (props) => (
-  <div>
-    <p>Best hand with {props.choice} is {props.bestHand}</p>
-  </div>
-)
-
 const cellStyle = {
   display   : 'table-cell',
   minWidth  : '3vw',
@@ -124,77 +116,10 @@ const StatusLine = (props) => (
 const tableStyle = {
   display: 'flex',
   justifyContent: 'space-evenly'
-}
-
-const createBet = () => {
-  const bet = {
-    index       : 0,
-    multiplier  : 0.2,
-    values      : [
-      0.2,
-      0.4,
-      0.6,
-      0.8,
-      1
-    ]
-  }
-  const betInterface = {
-    increment : () => {
-      bet.index = (bet.index+1) % 5
-      return {...betInterface}
-    },
-    limit: (limit = 1) => {
-      while (bet.index > 0 && bet.values[bet.index] > limit) {
-        bet.index--
       }
-      return {...betInterface}
-    },
-    toString  : () => bet.values[bet.index],
-    values    : () => [...bet.values],
-    get value() {
-      return bet.values[bet.index]
-    },
-    get index() {
-      return bet.index
-    }
-  }
-  return betInterface
-}
 
-const getKeyboardHandler = () => {
-  const handlers = []
 
-  const registerHandler = (eventType, handler) => {
-    const handlerRecord = {
-      eventType,
-      handler,
-      enabled: true,
-      wrapper: (event) => {
-        if (handlerRecord.enabled) {
-          handler(event)
-        }
-      }
-    }
-    const id = handlers.push(handlerRecord)
-    window.addEventListener(eventType, handlerRecord.wrapper)
-    return id
-  }
 
-  const removeHandler = (handlerId) => {
-    if (handlers.length < handlerId) {
-      return false
-    }
-
-    const handler = handlers[handlerId - 1]
-    handler.enabled = false
-    window.removeEventListener(handler.eventType, handler.wrapper)
-  }
-
-  return {
-    registerHandler,
-    removeHandler
-  }
-}
 
 class Game extends React.Component {
   constructor(props) {
