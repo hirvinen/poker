@@ -10,7 +10,7 @@ const Header = () => (
   <a style={linkStyle}>Play</a>
   </Link>
   <Link href="/about">
-    <a style={linkStyle}>About Quick Poker</a>
+    <a style={linkStyle}>About and instructions</a>
   </Link>
   </div>
 )
