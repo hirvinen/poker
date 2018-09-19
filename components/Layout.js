@@ -1,17 +1,12 @@
 import Header from './Header'
 import Head from 'next/head'
 
-const layoutStyle = {
-  margin: '1vw',
-  padding: '1vw',
-  border: '1px solid #DDD'
-}
-
 const Layout = (props) => (
-  <div style={layoutStyle}>
+  <div className="layout">
     <Head>
       <title>{props.title}</title>
       <meta name="viewport" content="initial-scale=1.0, width=device-width" />
+      <link rel="stylesheet" type="text/css" href="/static/styles/common.css" />
     </Head>
     <Header/>
     {props.children}
