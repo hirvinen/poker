@@ -3,3 +3,7 @@
   padding : '0.2vw';
   border  : '1px solid #DDD';
 }
+
+a.navigation {
+  margin-right: '3vw';
+}
