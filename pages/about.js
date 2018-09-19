@@ -17,9 +17,6 @@ export default () => (
         <li>On a computer, arrow keys may be used to choose a stack, deal(down) or increase the bet(up).</li>
         <li>To cheat, press + on the numpad.</li>
         <li>If you run out of money, reload the page</li>
-        <li></li>
-        <li></li>
-        <li></li>
       </ul>
     </Layout>
   </div>
