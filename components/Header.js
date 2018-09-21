@@ -1,12 +1,12 @@
 import Link from 'next/link'
 
 const Header = () => (
-  <div>
+  <div className="navigation">
   <Link href="/">
-    <a className="navigation">Play</a>
+    <a>Play</a>
   </Link>
   <Link href="/about">
-    <a className="navigation">About and instructions</a>
+    <a>About and instructions</a>
   </Link>
   </div>
 )
