@@ -1,0 +1,234 @@
+* {
+  box-sizing            : border-box;
+}
+
+:root {
+  font-family           : sans-serif;
+  --navigation-height   : 2vh;
+  --navigation-margin   : 0.5vh;
+}
+
+body {
+  margin: 0;
+}
+
+.layout {
+  border: none !important;
+  min-height: 100vh;
+}
+
+.navigation {
+  min-height    : var(--navigation-height);
+  margin-bottom : var(--navigation-margin);
+}
+
+.game {
+  display               : grid;
+  text-align            : center;
+  background            : green;
+  color                 : white;
+  --game-height         : calc(100vh - var(--navigation-height) - var(--navigation-margin));
+  padding-top           : calc(0.01 * var(--game-height));
+  padding-bottom        : calc(0.01 * var(--game-height));
+  --status-height       : calc(0.05 * var(--game-height));
+  --card-height         : calc(0.36 * var(--game-height));
+  --card-width          : calc(var(--card-height) / 1.4);
+  --deck-height         : calc(0.46 * var(--game-height));
+  --table-height        : calc(0.42 * var(--game-height));
+  grid-template-rows    : var(--status-height) var(--status-height) var(--deck-height) var(--table-height);
+  grid-template-areas   : 
+    "money  title title title bet"
+    "result info  info  info  joker"
+    "deck   deck  wins  wins  wins"
+    "table  table table table table"
+  ;
+}
+
+.game>* {
+  justify-self: center;
+  align-self  : center;
+}
+
+.game h1,
+.game p {
+  margin: 0;
+}
+
+/* grid areas */
+
+.money {
+  grid-area: money;
+}
+
+.result {
+  grid-area: result;
+}
+
+.bet {
+  grid-area: bet;
+}
+
+.jokerRounds {
+  grid-area: joker;
+}
+
+.title {
+  grid-area: title;
+}
+
+.info {
+  grid-area: info;
+}
+
+.winTable {
+  grid-area: wins
+}
+
+.deck {
+  grid-area: deck;
+}
+
+.hand,
+.left,
+.right {
+  grid-area: table;
+}
+
+/* other card styling */
+
+/* show value of visible cards */
+.card:not(.hidden):before{
+  content: attr(data-value)
+}
+
+.card {
+  --stack-offset : 0%;
+  --hiding-offset: 0.1vh;
+  border         : 0.1px solid lightgray;
+  font-size      : calc(var(--card-height) * 0.2);
+  min-width      : var(--card-width);
+  max-width      : var(--card-width);
+  min-height     : var(--card-height);
+  max-height     : var(--card-height);
+  border-radius  : calc(0.04 * var(--card-height));
+  background     : white;
+  display        : flex;
+  flex-direction : column;
+  justify-content: space-around;
+  position       : relative;
+  z-index        : calc(60 - var(--card-order, 0));
+}
+
+.card.red {
+  color: red;
+}
+
+.card.black {
+  color: black;
+}
+
+.card.blue {
+  color: blue;
+}
+
+/* spread out cards on the table */
+.card.hand {
+  --hand-offset : calc(var(--card-order) - 2);
+  left          : calc(20% * var(--hand-offset));
+}
+
+.card.left {
+  --stack-offset: 10%;
+  left          : var(--stack-offset);
+}
+
+.card.right {
+  --stack-offset: 30%;
+  left          : var(--stack-offset);
+}
+
+/* looser card stacks on the table */
+.card.left,
+.card.right {
+    --hiding-offset : 1vh;
+}
+
+.card.hidden {
+  border    : 0.7vh solid white;
+  background: radial-gradient(#88F, #66A);
+  top       : calc(var(--hiding-offset) * var(--card-order, 0));
+  left      : calc(var(--stack-offset, 0) + (var(--hiding-offset) * var(--card-order, 0)));
+}
+
+
+/* win table */
+
+.winTable {
+  display: table;
+}
+
+.winTableRow {
+  display: table-row;
+}
+
+.winTableRow:nth-child(even)>.winTableCell {
+  background-color: var(--odd-row-color);
+}
+
+.winTableRow:nth-child(even)>.winTableCell:first-child {
+  border-bottom-left-radius : var(--radius);
+  border-top-left-radius    : var(--radius);
+}
+
+.winTableRow:nth-child(even)>.winTableCell:last-child:not(.currentBet) {
+  border-bottom-right-radius: var(--radius);
+  border-top-right-radius   : var(--radius);
+}
+
+.winTableCell {
+  --odd-row-color  : #090;
+  --separator-color: white;
+  --radius         : 1vh;
+  display          : table-cell;
+  text-align       : right;
+  padding-top      : 0.2em;
+  padding-bottom   : 0.2em;
+  padding-left     : 0.5em;
+  padding-right    : 0.5em;
+  border-left      : 0.3vmin solid white;
+}
+
+.currentBet {
+  --border-color: #0E0;
+}
+
+.winTableCell.currentBet {
+  border-left : 0.5vmin solid var(--border-color);
+  border-right: 0.5vmin solid var(--border-color);
+  font-weight : bold;
+}
+.winTableRow:first-child>.winTableCell.currentBet {
+  border-top             : 0.5vmin solid var(--border-color);
+  border-top-left-radius : var(--radius);
+  border-top-right-radius: var(--radius);
+}
+
+.winTableRow:last-child>.winTableCell.currentBet {
+  border-bottom             : 0.5vmin solid var(--border-color);
+  border-bottom-left-radius : var(--radius);
+  border-bottom-right-radius: var(--radius);
+}
+
+.winTableCell.currentBet + .winTableCell {
+  border: none;
+}
+
+.winTableCell:first-child {
+  text-align  : left;
+  padding-left: 0.3em;
+  border      : none;
+}
+
+.winTableCell:last-child {
+  padding-right: 0.3em;
+}
