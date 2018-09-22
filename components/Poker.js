@@ -32,27 +32,39 @@ const Card = (props) => {
   )
 }
 
-const WinTableRow = (props) => (
-  <div className="winTableRow">
-    <div className="winTableCell">{props.title}</div>
-    {props.cells.map((value, index) => {
-      const className = index === props.hlIndex ? "winTableCell currentBet" : "winTableCell"
-      return <div className={className} key={props.title + value}>{value}</div>
-    })}
-  </div>
-)
+const WinTableRow = (props) => {
+  const rowClass = props.winningRow ? "winTableRow lastWin" : "winTableRow"
+  return (
+    <div className={rowClass}>
+      <div className="winTableCell winLabel">{props.title}</div>
+      {props.cells.map((value, index) => {
+        const className = index === props.currentBet ? "winTableCell currentBet" : "winTableCell otherBet"
+        return <div className={className} key={props.title + value}>{value}</div>
+      })}
+    </div>
+  )
+}
 
 const WinTable = (props) => (
   <div className="winTable">
-    <WinTableRow title='' cells={props.bet.values()} hlIndex={props.bet.index} />
-    {map(props.wins, (win, winKey) => (
-      <WinTableRow
-        title={win.description}
-        cells={props.bet.values().map(value => roundToPrecision(value*win.multiplier,1))}
-        key={winKey}
-        hlIndex={props.bet.index}
-      />
-    ))}
+    <WinTableRow
+      title={props.betButton}
+      cells={props.bet.values()}
+      currentBet={props.bet.index}
+      winningRow={false}
+    />
+    {map(props.wins, (win, winKey) => {
+      const winningRow = winKey === props.result
+      return (
+        <WinTableRow
+          title={win.description}
+          cells={props.bet.values().map(value => roundToPrecision(value*win.multiplier,1))}
+          key={winKey}
+          currentBet={props.bet.index}
+          winningRow={winningRow}
+        />
+      )}
+    )}
   </div>
 )
 
@@ -64,10 +76,9 @@ const PokerInfo  = (props) => {
 
 const StatusLine = (props) => (
   <React.Fragment>
-    <div className="money">Money:&nbsp;{props.money}</div>
-    {props.bet}
-    <div className="result">Last&nbsp;round result:&nbsp;{props.result}</div>
-    <div className="jokerRounds">Joker&nbsp;rounds:&nbsp;{props.jokerRounds}</div>
+    <div className="money">{props.money}</div>
+    {/*<div className="result">{`Result: ${props.result}`}</div>*/}
+    <div className="jokerRounds" data-label="🃏">{props.jokerRounds}</div>
   </React.Fragment>
 )
 
@@ -88,7 +99,7 @@ class Game extends React.Component {
       jokerInDeck   : false,
       round         : 0,
       gamePhase     : 'start',
-      result        : 'Nothing',
+      result        : 'none',
       actionQueue   : [],
       keyboardHandlerId: null
     }
@@ -209,13 +220,12 @@ class Game extends React.Component {
   handleResult () {
     // final hand
     const hand = this.state.deck.filter(card => card.position === 'hand')
-    const handResult = classify(hand)
+    const result = classify(hand)
 
     // money handling
     const {money, bet} = this.state
-    const win       = handResult === 'none' ? nullWin : this.props.wins[handResult]
+    const win       = result === 'none' ? nullWin : this.props.wins[result]
     const winAmount = roundToPrecision(bet.value * win.multiplier, 1)
-    const result    = handResult === 'none' ? 'Nothing' : (win.description + ' = +' + winAmount)
     if (winAmount > 0) {
       this.setState({
         money: roundToPrecision(money + winAmount, 1)
@@ -240,7 +250,7 @@ class Game extends React.Component {
     // show results and finish round
     this.setState({
       result,
-      gamePhase: 'roundFinished'
+      gamePhase : 'roundFinished'
     })
   }
 
@@ -384,18 +394,21 @@ class Game extends React.Component {
   }
 
   render () {
-    const betButton  = <button className="bet" style={{minWidth: '6vw'}} onClick={() => this.handleClick('bet')}>Bet:&nbsp;{this.state.bet.value}</button>
+    const betButton  = <button onClick={() => this.handleClick('bet')}>BET</button>
     return (
       <div className="game">
         <PokerTitle />
         <PokerInfo />
         <StatusLine
           money={this.state.money}
-          result={this.state.result}
           jokerRounds={this.state.jokerRounds}
-          bet={betButton}
         />
-        <WinTable wins={this.props.wins} bet={this.state.bet} />
+        <WinTable
+          wins={this.props.wins}
+          bet={this.state.bet}
+          betButton={betButton}
+          result={this.state.result}
+        />
         {this.renderCards()}
       </div>
     )
