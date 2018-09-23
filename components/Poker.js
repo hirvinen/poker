@@ -91,17 +91,19 @@ class Game extends React.Component {
       order   : index,
     }))
     this.state = {
-      deck          : deck,
-      joker         : Joker,
-      money         : 20,
-      bet           : createBet(),
-      jokerRounds   : 0,
-      jokerInDeck   : false,
-      round         : 0,
-      gamePhase     : 'start',
-      result        : 'none',
-      actionQueue   : [],
-      keyboardHandlerId: null
+      deck              : deck,
+      joker             : Joker,
+      money             : 20,
+      bet               : createBet(),
+      jokerRounds       : 0,
+      jokerInDeck       : false,
+      round             : 0,
+      gamePhase         : 'start',
+      result            : 'none',
+      actionQueue       : [],
+      gameHeight        : null,
+      cardHeight        : null,
+      keyboardHandlerId : null
     }
     this.handleClick = this.handleClick.bind(this)
   }
@@ -303,6 +305,20 @@ class Game extends React.Component {
     }
   }
 
+  handleResize () {
+    const cardAspectRatio = 1.4
+    const windowHeight    = window.innerHeight
+    const windowWidth     = window.innerWidth
+    const navigationHeight= document.querySelector('.navigation').clientHeight
+    const gameHeight      = windowHeight - navigationHeight
+    const cardWidthLimit  = 0.16 * windowWidth
+    const cardHeightLmit  = 0.35 * gameHeight
+    const cardHeight      = Math.min(cardAspectRatio * cardWidthLimit, cardHeightLmit)
+    const ratio = roundToPrecision(100*cardHeight / windowHeight)
+    /*console.log({windowHeight, windowWidth, gameHeight, cardHeight, ratio})*/
+    this.setState({gameHeight, cardHeight})
+  }
+
   componentDidMount () {
     const keyToClickMapper = (event) => {
       switch(event.key) {
@@ -323,6 +339,8 @@ class Game extends React.Component {
     const keyboardHandlerId = this.props.keyboardHandler
       .registerHandler('keydown', keyToClickMapper)
     this.setState({keyboardHandlerId})
+
+    const resizeHandlerId = this.props.keyboardHandler.registerHandler('resize', this.handleResize.bind(this))
   }
 
   componentWillUnmount () {
@@ -396,7 +414,16 @@ class Game extends React.Component {
   render () {
     const betButton  = <button onClick={() => this.handleClick('bet')}>BET</button>
     return (
-      <div className="game">
+      <div
+        className="game"
+        style={ this.state.gameHeight ? {
+          "--computed-game-height": this.state.gameHeight + 'px',
+          "--max-card-height"     : this.state.cardHeight + 'px'
+          } : {}
+        }
+      >
+        <div id="portrait"></div>
+        <div id="landscape"></div>
         <PokerTitle />
         <PokerInfo />
         <StatusLine

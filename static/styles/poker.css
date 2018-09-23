@@ -28,12 +28,12 @@ body {
   text-align            : center;
   background            : green;
   color                 : white;
-  --game-height         : calc(100vh - var(--navigation-height) - var(--navigation-margin));
+  --game-height         : var(--computed-game-height, calc(100vh - var(--navigation-height) - var(--navigation-margin)));
   padding-top           : calc(0.01 * var(--game-height));
   padding-bottom        : calc(0.01 * var(--game-height));
   --status-height       : calc(0.05 * var(--game-height));
-  --card-width          : 16vw;
-  --card-height         : calc(1.4 * var(--card-width));
+  --card-height         : var(--max-card-height, 30vh);
+  --card-width          : calc(var(--card-height) / 1.4);
   --deck-height         : calc(0.42 * var(--game-height));
   --table-height        : calc(0.41 * var(--game-height));
   grid-template-rows    : var(--status-height) var(--status-height) var(--deck-height) var(--table-height);
@@ -47,22 +47,28 @@ body {
 }
 
 /* in practice, probably portrait mode mobile */
-@media (max-width: 500px) {
+@media (max-width: 450px) {
   .game {
     font-size: 80%;
+    --card-width          : 16vw;
+    --card-height         : calc(1.4 * var(--card-width));
+
   }
 }
 
 /* in practice, probably landscape mode mobile */
-@media (max-height: 500px) {
+@media (max-height: 450px) {
+  :root {
+    --navigation-height: 5vh;
+  }
+  
   .navigation {
-    --navigation-height : 5vh;
-    height              : var(--navigation-height);
+    min-height: var(--navigation-height);
   }
   .game {
     font-size             : 80%;
-    --game-height         : calc(100vh - var(--navigation-height) - var(--navigation-margin));
-    --card-height         : 30vh;
+    --game-height         : var(--computed-game-height, calc(100vh - var(--navigation-height) - var(--navigation-margin)));
+    --card-height         : var(--max-card-height, 30vh);
     --card-width          : calc(var(--card-height) / 1.4);
     --status-height       : calc(0.06 * var(--game-height));
     --deck-height         : calc(0.42 * var(--game-height));
