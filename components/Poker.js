@@ -121,16 +121,18 @@ class Game extends React.Component {
   }
 
   toggleDebugMode () {
-    this.setState({debugMode: !this.state.debugMode})
+    this.setState( ({debugMode}) => ({
+      debugMode: !debugMode
+    }))
   }
 
   increaseBet () {
-    const bet = this.state.bet.increment().limit(this.state.money)
-    this.setState({bet})
+    this.setState( ({bet, money}) => ({
+      bet: bet.increment().limit(money)
+    }))
   }
   
   deal () {
-    const {money, bet, round, jokerRounds} = this.state
     // get a random ordering
     const orderArray = shuffle(Array.from(
       {length: this.state.deck.length},
@@ -155,63 +157,56 @@ class Game extends React.Component {
         return {...card, order: order - 8, position: 'deck'}
       }
     })
-    this.setState({
+    
+    this.setState( ({money, round, bet, jokerRounds}) => ({
       deck,
       money       : roundToPrecision(money - bet.value,1),
       gamePhase   : 'handDealt',
-      round       : round + 1
-    })
-
-    if (jokerRounds >= 1) {
-      this.setState({
-        jokerRounds: jokerRounds -1
-      })
-    }
+      round       : round + 1,
+      jokerRounds : jokerRounds >= 1 ? jokerRounds - 1 : 0,
+    }))
   }
   
   addMoney (amount = 10) {
-    const money = roundToPrecision(this.state.money + amount, 1)
-    this.setState({money})
+    this.setState( ({money}) => ({
+      money: roundToPrecision(money + amount, 1)
+    }))
   }
 
   addJokerRounds (count = 10) {
-    const {jokerInDeck, jokerRounds, actionQueue, jokerAdded} = this.state
     // If joker was not in the deck, show it but do not add it to the deck yet
-    if (!jokerInDeck) {
-      this.setState({
-        jokerAdded  : !jokerAdded,
+    if (!this.state.jokerInDeck) {
+      this.setState( ({actionQueue}) => ({
+        jokerAdded  : false,
         actionQueue : [...actionQueue, 'addJokerToDeck']
-      })
+      }))
     }
 
     // Joker already in deck, so just add joker rounds
-    this.setState({
+    this.setState( ({jokerRounds}) => ({
       jokerRounds: jokerRounds + count
-    })
+    }))
   }
 
   addJokerToDeck () {
-    const {jokerInDeck, deck} = this.state
-    
     // only add Joker to deck if not already present
-    if (!jokerInDeck) {
-      this.setState({
+    if (!this.state.jokerInDeck) {
+      this.setState( ({deck}) => ({
         jokerInDeck : true,
         jokerAdded  : false,
         deck        : [...deck, {...Joker, position: 'deck', order: 52}]
-      })
+      }))
     } else {
       throw Error('Deck already had a Joker')
     }
   }
 
   removeJokerFromDeck () {
-    const {jokerInDeck, deck} = this.state
-    if (jokerInDeck) {
-      this.setState({
+    if (this.state.jokerInDeck) {
+      this.setState( ({deck}) => ({
         jokerInDeck : false,
         deck        : deck.filter(card => card.value !== 0)
-      })
+      }))
     } else {
       throw Error('Deck does not have a Joker')
     }
@@ -242,32 +237,34 @@ class Game extends React.Component {
   
   handleResult () {
     // final hand
-    const hand = this.state.deck.filter(card => card.position === 'hand')
-    const result = classify(hand)
+    const hand          = this.state.deck.filter(card => card.position === 'hand')
+    const result        = classify(hand)
 
     // money handling
     const {money, bet}  = this.state
     const win           = result === 'none' ? nullWin : this.props.wins[result]
     const winAmount     = roundToPrecision(bet.value * win.multiplier, 1)
     if (winAmount > 0) {
-      this.setState({
+      this.setState( ({money}) => ({
         money: roundToPrecision(money + winAmount, 1)
-      })
+      }))
     } else if (money < bet.value) {
       // autolimit bet if low on money
-      this.setState({bet: bet.limit(money)})
+      this.setState( ({bet}) => ({
+        bet: bet.limit(money)
+      }))
     }
 
-    const {jokerInDeck, jokerRounds, actionQueue} = this.state
+    const {jokerInDeck, jokerRounds} = this.state
     // on straight or better, add Joker rounds unless Joker was in play
     if (win.multiplier >= 11 && !jokerInDeck) {
       this.addJokerRounds()
     }
     // Queue removing Joker from the deck if this was the last joker round
     if (jokerInDeck && jokerRounds === 0) {
-      this.setState({
+      this.setState( ({actionQueue}) => ({
         actionQueue: [...actionQueue, 'removeJokerFromDeck']
-      })
+      }))
     }
 
     // show results and finish round
@@ -320,13 +317,9 @@ class Game extends React.Component {
 
   handleActionQueue () {
     // remove actions that get handled
-    const actionQueue = this.state.actionQueue.filter(action => !this.handleAction(action))
-    this.setState({actionQueue})
-    // Throw if something was left
-    if (actionQueue.length > 0) {
-      console.log('Unknown actions in queue', actionQueue)
-      throw Error('Unknown actions in queue')
-    }
+    this.setState( ({actionQueue}) => ({
+      actionQueue: actionQueue.filter(action => !this.handleAction(action))
+    }))
   }
 
   handleKeyDown (event) {
