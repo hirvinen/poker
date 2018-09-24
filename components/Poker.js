@@ -186,7 +186,7 @@ class Game extends React.Component {
 
     // Joker already in deck, so just add joker rounds
     this.setState({
-      jokerRounds: jokerRounds +10
+      jokerRounds: jokerRounds + count
     })
   }
 
