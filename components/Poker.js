@@ -13,21 +13,17 @@ import classify               from './classify'
 const Card = (props) => {
   const card = props.card
   const {order, position, suit: {color}} = card
-  const baseClasses = ['card', position]
-  let classes
-  if (position === 'deck' || (order > 0 && position != 'hand')) {
-    classes = [...baseClasses, 'hidden']
-  } else {
-    classes = [...baseClasses, color, 'shown']
-  }
+  const baseClasses = ['card', position, color]
+  const hidden = position === 'deck' || (order > 0 && position != 'hand')
+  const classes= hidden ? [...baseClasses, 'hidden'] : [...baseClasses, 'shown']
   return (
     <div
       style={{'--card-order': order}}
       data-order={order}
-      data-value={card.toString()}
       className={classes.join(' ')}
       onClick={props.onClick}
     >
+        {hidden || card.toString()}
     </div>
   )
 }
@@ -101,8 +97,6 @@ class Game extends React.Component {
       gamePhase         : 'start',
       result            : 'none',
       actionQueue       : [],
-      gameHeight        : null,
-      cardHeight        : null,
       keyboardHandlerId : null
     }
     this.handleClick = this.handleClick.bind(this)
@@ -305,20 +299,6 @@ class Game extends React.Component {
     }
   }
 
-  handleResize () {
-    const cardAspectRatio = 1.4
-    const windowHeight    = window.innerHeight
-    const windowWidth     = window.innerWidth
-    const navigationHeight= document.querySelector('.navigation').clientHeight
-    const gameHeight      = windowHeight - navigationHeight
-    const cardWidthLimit  = 0.16 * windowWidth
-    const cardHeightLmit  = 0.35 * gameHeight
-    const cardHeight      = Math.min(cardAspectRatio * cardWidthLimit, cardHeightLmit)
-    const ratio = roundToPrecision(100*cardHeight / windowHeight)
-    /*console.log({windowHeight, windowWidth, gameHeight, cardHeight, ratio})*/
-    this.setState({gameHeight, cardHeight})
-  }
-
   componentDidMount () {
     const keyToClickMapper = (event) => {
       switch(event.key) {
@@ -339,8 +319,6 @@ class Game extends React.Component {
     const keyboardHandlerId = this.props.keyboardHandler
       .registerHandler('keydown', keyToClickMapper)
     this.setState({keyboardHandlerId})
-
-    const resizeHandlerId = this.props.keyboardHandler.registerHandler('resize', this.handleResize.bind(this))
   }
 
   componentWillUnmount () {
@@ -415,15 +393,7 @@ class Game extends React.Component {
     const betButton  = <button onClick={() => this.handleClick('bet')}>BET</button>
     return (
       <div
-        className="game"
-        style={ this.state.gameHeight ? {
-          "--computed-game-height": this.state.gameHeight + 'px',
-          "--max-card-height"     : this.state.cardHeight + 'px'
-          } : {}
-        }
-      >
-        <div id="portrait"></div>
-        <div id="landscape"></div>
+        className="game">
         <PokerTitle />
         <PokerInfo />
         <StatusLine

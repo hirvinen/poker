@@ -4,8 +4,7 @@
 
 :root {
   font-family           : sans-serif;
-  --navigation-height   : 2vh;
-  --navigation-margin   : 0.5vh;
+  --navigation-height   : calc(var(--navigation-line-height, 1.1) * 1rem);
   --currency-label      : "€";
 }
 
@@ -18,81 +17,67 @@ body {
   min-height: 100vh;
 }
 
-.navigation {
-  min-height    : var(--navigation-height);
-  margin-bottom : var(--navigation-margin);
+/* common to all game layouts */
+.game {
+  display       : grid;
+  text-align    : center;
+  background    : green;
+  color         : white;
+  --game-height : calc(100vh - var(--navigation-height));
+  --game-width  : 100vw;
+  min-height    : var(--game-height);
+  max-height    : var(--game-height);
 }
 
+/* default layout */
+
+@media (max-aspect-ratio: 1/1) {
 .game {
-  display               : grid;
-  text-align            : center;
-  background            : green;
-  color                 : white;
-  --game-height         : var(--computed-game-height, calc(100vh - var(--navigation-height) - var(--navigation-margin)));
-  padding-top           : calc(0.01 * var(--game-height));
-  padding-bottom        : calc(0.01 * var(--game-height));
-  --status-height       : calc(0.05 * var(--game-height));
-  --card-height         : var(--max-card-height, 30vh);
-  --card-width          : calc(var(--card-height) / 1.4);
-  --deck-height         : calc(0.42 * var(--game-height));
-  --table-height        : calc(0.41 * var(--game-height));
-  grid-template-rows    : var(--status-height) var(--status-height) var(--deck-height) var(--table-height);
+    --layout              : 'portrait';
+    grid-template-columns : 3fr 3fr 8fr 3fr 3fr;
+    grid-template-rows    : 2fr 3fr 8fr 8fr;
   grid-template-areas   : 
-    "title  title title title title"
+      "money  title title title joker"
     "info   info  info  info  info"
     "deck   deck  wins  wins  wins"
     "table  table table table table"
-    "money  .     .     .     joker"
   ;
 }
+  }
 
-/* in practice, probably portrait mode mobile */
-@media (max-width: 450px) {
+@media (min-aspect-ratio: 1 / 1) {
   .game {
-    font-size: 80%;
-    --card-width          : 16vw;
-    --card-height         : calc(1.4 * var(--card-width));
-
-  }
-}
-
-/* in practice, probably landscape mode mobile */
-@media (max-height: 450px) {
-  :root {
-    --navigation-height: 5vh;
-  }
-  
-  .navigation {
-    min-height: var(--navigation-height);
-  }
-  .game {
-    font-size             : 80%;
-    --game-height         : var(--computed-game-height, calc(100vh - var(--navigation-height) - var(--navigation-margin)));
-    --card-height         : var(--max-card-height, 30vh);
-    --card-width          : calc(var(--card-height) / 1.4);
-    --status-height       : calc(0.06 * var(--game-height));
-    --deck-height         : calc(0.42 * var(--game-height));
-    --table-height        : calc(0.36 * var(--game-height));
-  
-    grid-template-rows    : var(--status-height) var(--status-height) var(--status-height) calc(0.5 * var(--deck-height)) calc(0.5 * var(--deck-height)) var(--table-height);
-    grid-template-columns: 10% 20% 20% 20% 15% 15%;
-    grid-template-areas:
-      "title  title .     wins  wins  wins"
-      "info   info  info  wins  wins  wins"
-      "info   info  info  wins  wins  wins"
-      "money  deck  .     wins  wins  wins"
-      "joker  deck  .     wins  wins  wins"
+    --layout              : 'landscape';
+    grid-template-columns : 2fr 4fr 4fr 4fr 3fr 3fr;
+    grid-template-rows    : 1fr 1fr 4fr 4fr 8fr;
+    grid-template-areas   :
+      "money  title title title title joker"
+      "info   info  info  info  info  info"
+      "deck   deck  .     wins  wins  wins"
+      "deck   deck  .     wins  wins  wins"
       "table  table table table table table"
     ;
   }
-  .winTable {
-    font-size: 0.8em;
   }
-}
 
 .game>* {
   justify-self: center;
   align-self  : center;
+}
+
+.game .money {
+  justify-self: start;
+  margin-left : 2vw;
+}
+.game .jokerRounds {
+  justify-self: end;
+  margin-right: 2vw;
+}
+
+.game .money,
+.game .title,
+.game .jokerRounds {
+  margin-top: 1vh;
 }
 
 .game h1,
@@ -141,19 +126,18 @@ body {
 }
 
 .money, .jokerRounds {
-  display: flex;
-  align-items: center;
+  display     : flex;
+  align-items : center;
+  font-size   : 2em;
 }
 
 /* status area labels */
 
 .money::before {
-  font-size: 2em;
   content: var(--currency-label);
 }
 
 .jokerRounds::before {
-  font-size: 2em;
   content: attr(data-label)
 }
 /* other card styling */
@@ -164,21 +148,29 @@ body {
 }
 
 .card {
-  --stack-offset : 0%;
-  --hiding-offset: 0.1vmin;
-  border         : 0.1px solid lightgray;
-  font-size      : calc(var(--card-height) * 0.2);
-  min-width      : var(--card-width);
-  max-width      : var(--card-width);
-  min-height     : var(--card-height);
-  max-height     : var(--card-height);
-  border-radius  : calc(0.04 * var(--card-height));
-  background     : white;
-  display        : flex;
-  flex-direction : column;
-  justify-content: space-around;
-  position       : relative;
-  z-index        : calc(60 - var(--card-order, 0));
+  --card-width    : calc(0.16 * var(--game-width));
+  --card-height   : calc(1.4 * var(--card-width));  
+  --stack-offset  : 0%;
+  --hiding-offset : 0.04vh;
+  border          : 0.1px solid lightgray;
+  font-size       : calc(var(--card-height) * 0.2);
+  width           : var(--card-width);
+  height          : var(--card-height);
+  border-radius   : calc(0.04 * var(--card-height));
+  background      : white;
+  display         : flex;
+  flex-direction  : column;
+  justify-content : space-around;
+  position        : relative;
+  z-index         : calc(60 - var(--card-order, 0));
+}
+
+@media (min-aspect-ratio: 3/2) {
+  .card {
+    --card-height-fraction : 0.34;
+    --card-height           : calc(var(--card-height-fraction) * var(--game-height));
+    --card-width            : calc(var(--card-height) / 1.4);
+  }
 }
 
 .card.red {
@@ -226,7 +218,8 @@ body {
 /* win table */
 
 .winTable {
-  display: table;
+  display   : table;
+  font-size : calc(0.02 * var(--game-height))
 }
 
 .winTableRow {
@@ -265,14 +258,13 @@ body {
 }
 
 .winTableCell.currentBet {
-  border-left : 0.5vmin solid var(--border-color);
-  border-right: 0.5vmin solid var(--border-color);
-  /*font-weight : bold;*/
+  border-left               : 0.5vmin solid var(--border-color);
+  border-right              : 0.5vmin solid var(--border-color);
 }
 .winTableRow:first-child>.winTableCell.currentBet {
-  border-top             : 0.5vmin solid var(--border-color);
-  border-top-left-radius : var(--radius);
-  border-top-right-radius: var(--radius);
+  border-top                : 0.5vmin solid var(--border-color);
+  border-top-left-radius    : var(--radius);
+  border-top-right-radius   : var(--radius);
 }
 
 .winTableRow:last-child>.winTableCell.currentBet {
@@ -282,13 +274,13 @@ body {
 }
 
 .winTableCell.currentBet + .winTableCell {
-  border: none;
+  border                    : none;
 }
 
 .winTableCell:first-child {
-  text-align  : left;
-  padding-left: 0.3em;
-  border      : none;
+  text-align                : left;
+  padding-left              : 0.3em;
+  border                    : none;
 }
 
 .winTableCell:last-child {
@@ -298,6 +290,7 @@ body {
 /* show last win if any */
 .lastWin>.winTableCell.winLabel,
 .lastWin>.winTableCell.currentBet{
-  font-weight: bold;
-  box-shadow: inset 0 0 3vmin white;
+  font-weight : bold;
+  box-shadow  : inset 0 0 3vmin white;
+}
 }
