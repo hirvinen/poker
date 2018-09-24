@@ -15,8 +15,8 @@ export default () => (
         <li>Your hand is formed from the two cards on the left and the stack you chose.</li>
         <li>A joker is added to the deck for the next ten rounds if you get a straight or better.</li>
         <li>On a computer, arrow keys may be used to choose a stack, deal(down) or increase the bet(up).</li>
-        <li>To cheat, press + on the numpad.</li>
-        <li>If you run out of money, reload the page</li>
+        <li>To cheat, press * or + on the numpad.</li>
+        <li>If you run out of money, reload the page or cheat.</li>
       </ul>
     </Layout>
   </div>

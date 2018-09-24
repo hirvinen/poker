@@ -87,6 +87,7 @@ class Game extends React.Component {
       order   : index,
     }))
     this.state = {
+      debugMode         : false,
       deck              : deck,
       joker             : Joker,
       money             : 20,
@@ -97,9 +98,30 @@ class Game extends React.Component {
       gamePhase         : 'start',
       result            : 'none',
       actionQueue       : [],
-      keyboardHandlerId : null
     }
-    this.handleClick = this.handleClick.bind(this)
+
+    // to simplify handleKeyDown
+    this.keyToActionMap = {
+      ' '         : 'deal',
+      'ArrowDown' : 'deal',
+      'ArrowLeft' : 'left',
+      'ArrowRight': 'right',
+      'ArrowUp'   : 'bet',
+      '+'         : 'addMoney',
+      'Add'       : 'addMoney',
+      '*'         : 'addJokerRounds',
+      'Multiply'  : 'addJokerRounds',
+      '/'         : 'toggleDebugMode',
+      'Divide'    : 'toggleDebugMode',
+  }
+    this.keyboardHandlerId  = null
+    // bind event handlers
+    this.handleClick    = this.handleClick.bind(this)
+    this.handleKeyDown  = this.handleKeyDown.bind(this)
+  }
+
+  toggleDebugMode () {
+    this.setState({debugMode: !this.state.debugMode})
   }
 
   increaseBet () {
@@ -147,6 +169,11 @@ class Game extends React.Component {
     }
   }
   
+  addMoney (amount = 10) {
+    const money = roundToPrecision(this.state.money + amount, 1)
+    this.setState({money})
+  }
+
   addJokerRounds (count = 10) {
     const {jokerInDeck, jokerRounds, actionQueue, jokerAdded} = this.state
     // If joker was not in the deck, show it but do not add it to the deck yet
@@ -250,7 +277,8 @@ class Game extends React.Component {
     })
   }
 
-  handleClick (action) {
+  // returns true on if something is done, and false if not
+  handleAction (action) {
     const {gamePhase, money, bet, jokerInDeck} = this.state
     // only hanlde queued actions on dealing for now
     switch (action) {
@@ -258,39 +286,41 @@ class Game extends React.Component {
       if ((gamePhase === 'start' || gamePhase === 'roundFinished') &&
           money >= bet.value) {
         this.handleActionQueue()
-        this.deal()
+        return this.deal(), true
       }
-      break
+
+      return false
     case 'bet':
       if ((gamePhase === 'start' || gamePhase === 'roundFinished') &&
           !jokerInDeck) {
-          this.increaseBet()
+        return this.increaseBet(), true
         }
-      break
+      
+      return false
     case 'left':
     case 'right':
       if (gamePhase === 'handDealt') {
-        this.choose(action)
+        return this.choose(action), true
       }
-      break
+      
+      return false
+    case 'addJokerRounds'       : return this.addJokerRounds(),       true
+    case 'addJokerToDeck'       : return this.addJokerToDeck(),       true
+    case 'removeJokerFromDeck'  : return this.removeJokerFromDeck(),  true
+    case 'addMoney'             : return this.addMoney(),             true
+    case 'toggleDebugMode'      : return this.toggleDebugMode(),      true
     default:
-      break
+      return false
     }
   }
 
+  handleClick (action) {
+    this.handleAction(action)
+  }
+
   handleActionQueue () {
-    const actionQueue = this.state.actionQueue.filter(action => {
-      switch (action) {
-      case 'addJokerToDeck':
-        this.addJokerToDeck()
-        return false
-      case 'removeJokerFromDeck':
-        this.removeJokerFromDeck()
-        return false
-      default:
-        return true
-      }
-    })
+    // remove actions that get handled
+    const actionQueue = this.state.actionQueue.filter(action => !this.handleAction(action))
     this.setState({actionQueue})
     // Throw if something was left
     if (actionQueue.length > 0) {
@@ -299,31 +329,21 @@ class Game extends React.Component {
     }
   }
 
-  componentDidMount () {
-    const keyToClickMapper = (event) => {
-      switch(event.key) {
-      case ' ':
-      case 'ArrowDown':
-        return this.handleClick('deal')
-      case 'ArrowLeft':
-        return this.handleClick('left')
-      case 'ArrowRight':
-        return this.handleClick('right')
-      case 'ArrowUp':
-        return this.handleClick('bet')
-      case 'Add':
-        return this.addJokerRounds()
+  handleKeyDown (event) {
+    const knownKey = this.keyToActionMap.hasOwnProperty(event.key)
+    if (knownKey) {
+      this.handleAction(this.keyToActionMap[event.key])
       }
     }
     
-    const keyboardHandlerId = this.props.keyboardHandler
-      .registerHandler('keydown', keyToClickMapper)
-    this.setState({keyboardHandlerId})
+  componentDidMount () {    
+    this.keyboardHandlerId = this.props.keyboardHandler
+      .registerHandler('keydown', this.handleKeyDown)
   }
 
   componentWillUnmount () {
-    if (this.state.keyboardHandlerId) {
-      this.props.keyboardHandler.removeHandler(this.state.keyboardHandlerId)
+    if (this.keyboardHandlerId) {
+      this.props.keyboardHandler.removeHandler(this.keyboardHandlerId)
     }
   }
  
