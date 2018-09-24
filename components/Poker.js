@@ -221,7 +221,7 @@ class Game extends React.Component {
     const gamePhase       = choice
     const toDeck          = (choice === 'left') ? 'right' : 'left'
     const orderIncrement  = this.state.deck.length - 8
-    const deck = this.state.deck.map(card => {
+    const deck            = this.state.deck.map(card => {
       const {position, order} = card
       if (position === toDeck) {
         return {...card, order: order + orderIncrement, position: 'deck'}
@@ -246,9 +246,9 @@ class Game extends React.Component {
     const result = classify(hand)
 
     // money handling
-    const {money, bet} = this.state
-    const win       = result === 'none' ? nullWin : this.props.wins[result]
-    const winAmount = roundToPrecision(bet.value * win.multiplier, 1)
+    const {money, bet}  = this.state
+    const win           = result === 'none' ? nullWin : this.props.wins[result]
+    const winAmount     = roundToPrecision(bet.value * win.multiplier, 1)
     if (winAmount > 0) {
       this.setState({
         money: roundToPrecision(money + winAmount, 1)
