@@ -113,7 +113,7 @@ class Game extends React.Component {
       'Multiply'  : 'addJokerRounds',
       '/'         : 'toggleDebugMode',
       'Divide'    : 'toggleDebugMode',
-  }
+    }
     this.keyboardHandlerId  = null
     // bind event handlers
     this.handleClick    = this.handleClick.bind(this)
@@ -294,7 +294,7 @@ class Game extends React.Component {
       if ((gamePhase === 'start' || gamePhase === 'roundFinished') &&
           !jokerInDeck) {
         return this.increaseBet(), true
-        }
+      }
       
       return false
     case 'left':
@@ -333,9 +333,9 @@ class Game extends React.Component {
     const knownKey = this.keyToActionMap.hasOwnProperty(event.key)
     if (knownKey) {
       this.handleAction(this.keyToActionMap[event.key])
-      }
     }
-    
+  }
+
   componentDidMount () {    
     this.keyboardHandlerId = this.props.keyboardHandler
       .registerHandler('keydown', this.handleKeyDown)
@@ -376,35 +376,27 @@ class Game extends React.Component {
     6. When a joker is removed from the deck, move it to the middle of the screen and vanish it. (TODO)
  */
   renderCards () {
-    const {deck, jokerAdded} = this.state
-    const clickHandlers = {
-      deck  : () => this.handleClick('deal'),
-      left  : () => this.handleClick('left'),
-      right : () => this.handleClick('right'),
-      hand  : null,
-      joker : null
-    }
-    const cards = deck.map(card => {
-      if (card.order === 0 && clickHandlers[card.position]) {
-        return  (
-          <Card
-            card={card}
-            key={card.toString()}
-            onClick={clickHandlers[card.position]}
-          />
-        )
-      }
-
-      return <Card card={card} key={card.toString()} />
-    })
-    if (jokerAdded) {
-      cards.push(
-        <Card card={{...Joker, order: 0, position:'joker'}} />
-      )
-    }
     return (
       <React.Fragment>
-        {cards}
+        {this.state.deck.map(card => (
+          <Card card={card} key={card.toString()} />
+        ))}
+      </React.Fragment>
+    )
+  }
+
+  renderAddingJoker () {
+    return <Card card={{...Joker, order: 0, position:'joker'}} />
+  }
+
+  renderControls () {
+    const classes = this.state.debugMode ? "control debug" : "control"
+    return (
+      <React.Fragment>
+        <div className={classes + " deck" } onClick={ () => this.handleClick('deal')  } />
+        <div className={classes + " left" } onClick={ () => this.handleClick('left')  } />
+        <div className={classes + " right"} onClick={ () => this.handleClick('right') } />
+        <div className={classes + " bet"  } onClick={ () => this.handleClick('bet')   } />
       </React.Fragment>
     )
   }
@@ -427,6 +419,9 @@ class Game extends React.Component {
           result={this.state.result}
         />
         {this.renderCards()}
+        {this.state.jokerAdded && this.renderAddingJoker()}
+        {this.renderControls()}
+        {this.state.debugMode && <div id="test" style={{"--card-order":0}} /> }
       </div>
     )
   }

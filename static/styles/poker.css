@@ -32,18 +32,18 @@ body {
 /* default layout */
 
 @media (max-aspect-ratio: 1/1) {
-.game {
+  .game {
     --layout              : 'portrait';
     grid-template-columns : 3fr 3fr 8fr 3fr 3fr;
     grid-template-rows    : 2fr 3fr 8fr 8fr;
-  grid-template-areas   : 
+    grid-template-areas   : 
       "money  title title title joker"
-    "info   info  info  info  info"
-    "deck   deck  wins  wins  wins"
-    "table  table table table table"
-  ;
-}
+      "info   info  info  info  info"
+      "deck   deck  wins  wins  wins"
+      "table  table table table table"
+    ;
   }
+}
 
 @media (min-aspect-ratio: 1 / 1) {
   .game {
@@ -58,7 +58,7 @@ body {
       "table  table table table table table"
     ;
   }
-  }
+}
 
 .game>* {
   justify-self: center;
@@ -142,9 +142,19 @@ body {
 }
 /* other card styling */
 
-/* show value of visible cards */
-.card:not(.hidden):before{
-  content: attr(data-value)
+#test::before{
+  display: block;
+  content: var(--layout);
+  padding: 20%;
+}
+#test {
+  grid-area       : wins;
+  background-color: lightgray; 
+  color           : blue;
+  --card-width    : calc(0.16 * var(--game-width));
+  --card-height   : calc(1.4 * var(--card-width));  
+  width           : var(--card-width);
+  height          : var(--card-height);
 }
 
 .card {
@@ -214,6 +224,12 @@ body {
   left      : calc(var(--stack-offset, 0) + (var(--hiding-offset) * var(--card-order, 0)));
 }
 
+/* joker position */
+.card.joker {
+  position: absolute;
+  top : calc(0.5 * var(--game-height) - 0.5 * var(--card-height));
+  left: calc(0.5 * var(--game-width)  - 0.5 * var(--card-width));
+}
 
 /* win table */
 
@@ -293,4 +309,59 @@ body {
   font-weight : bold;
   box-shadow  : inset 0 0 3vmin white;
 }
+
+/* event handler placeholders */
+
+.control {
+  z-index: 100;
+}
+
+.control.deck,
+.control.left,
+.control.right {
+  /* card size + 20% */
+  --control-width   : calc(0.16 * var(--game-width) * 1.2);
+  --control-height  : calc(1.4  * var(--control-width));  
+  min-width         : var(--control-width);
+  min-height        : var(--control-height);
+  position          : relative;
+}
+@media (min-aspect-ratio: 3/2) {
+  .control.deck,
+  .control.left,
+  .control.right {
+    /* card size + 15% */
+    --control-height-fraction : 0.34;
+    --control-height          : calc(var(--control-height-fraction) * var(--game-height) * 1.15);
+    --control-width           : calc(var(--control-height) / 1.4);
+    min-width                 : var(--control-width);
+    min-height                : var(--control-height);
+  }
+}
+
+/* debug mode */
+.control.deck.debug,
+.control.left.debug,
+.control.right.debug {
+  background-color: #fff6;
+}
+
+.control.deck {
+  grid-area : deck;
+  left      : calc(0.05 * var(--control-width));
+  top       : calc(0.03 * var(--control-height));
+}
+.control.left {
+  grid-area : table;
+  left      : calc(0.05 * var(--control-width) + 10%);
+  top       : calc(0.03 * var(--control-height));
+}
+
+.control.right {
+  grid-area : table;
+  left      : calc(0.05 * var(--control-width) + 30%);
+  top       : calc(0.03 * var(--control-height));
+}
+.control.bet {
+  grid-area: wins;
 }
