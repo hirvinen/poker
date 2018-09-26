@@ -118,6 +118,7 @@ class Game extends React.Component {
     // bind event handlers
     this.handleClick    = this.handleClick.bind(this)
     this.handleKeyDown  = this.handleKeyDown.bind(this)
+    this.handleResult   = this.handleResult.bind(this)
   }
 
   toggleDebugMode () {
@@ -213,26 +214,29 @@ class Game extends React.Component {
   }
   
   choose (choice) {
-    const gamePhase       = choice
-    const toDeck          = (choice === 'left') ? 'right' : 'left'
-    const orderIncrement  = this.state.deck.length - 8
-    const deck            = this.state.deck.map(card => {
-      const {position, order} = card
-      if (position === toDeck) {
-        return {...card, order: order + orderIncrement, position: 'deck'}
-      } else if (position === choice) {
-        return {...card, order: order + 2,              position: 'hand'}
+    this.setState( ({deck, gamePhase}) => {
+      if (gamePhase !== 'handDealt') {
+        return {}
       }
+      const toDeck          = (choice === 'left') ? 'right' : 'left'
+      const orderIncrement  = deck.length - 8
+      const deckAfterChoice = deck.map(card => {
+        const {position, order} = card
+        if (position === toDeck) {
+          return {...card, order: order + orderIncrement, position: 'deck'}
+        } else if (position === choice) {
+          return {...card, order: order + 2,              position: 'hand'}
+        }
 
-      // already in deck
-      return card
-    })
-
-    this.setState({
-      deck,
-      gamePhase
-    })
-    this.handleResult()
+        // already in deck
+        return card
+      })
+      
+      return {
+        deck      : deckAfterChoice,
+        gamePhase : choice,
+      }
+    }, this.handleResult)
   }
   
   handleResult () {
