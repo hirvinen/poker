@@ -35,7 +35,7 @@ const WinTableRow = (props) => {
       <div className="winTableCell winLabel">{props.title}</div>
       {props.cells.map((value, index) => {
         const className = index === props.currentBet ? "winTableCell currentBet" : "winTableCell otherBet"
-        return <div className={className} key={props.title + value}>{value}</div>
+        return <div className={className} key={props.title + value}>{Math.floor(value) < value ? value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : value}</div>
       })}
     </div>
   )
@@ -72,7 +72,7 @@ const PokerInfo  = (props) => {
 
 const StatusLine = (props) => (
   <React.Fragment>
-    <div className="money">{props.money}</div>
+    <div className="money">{props.money.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
     {/*<div className="result">{`Result: ${props.result}`}</div>*/}
     <div className="jokerRounds" data-label="🃏">{props.jokerRounds}</div>
   </React.Fragment>
