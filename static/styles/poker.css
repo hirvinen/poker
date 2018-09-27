@@ -27,6 +27,7 @@ body {
   --game-width  : 100vw;
   min-height    : var(--game-height);
   max-height    : var(--game-height);
+  --control-height: calc (0.9 * 3 / 26);
 }
 
 /* default layout */
@@ -35,13 +36,39 @@ body {
   .game {
     --layout              : 'portrait';
     grid-template-columns : 3fr 3fr 8fr 3fr 3fr;
-    grid-template-rows    : 2fr 3fr 8fr 8fr;
+    grid-template-rows    : 3fr 10fr 10fr 3fr;
     grid-template-areas   : 
-      "money  title title title joker"
-      "info   info  info  info  info"
-      "deck   deck  wins  wins  wins"
-      "table  table table table table"
+      "money   title   title  title    joker"
+      "deck    deck    wins    wins    wins"
+      "table   table   table   table   table"
+      "control control control control control"
     ;
+  }
+  
+  .control {
+    --control-height: 7vh;
+    --control-width :  14vw;
+  }
+}
+
+/* really tall phones etc. */
+@media (max-aspect-ratio: 1/2) {
+  .game {
+    --layout              : 'portrait';
+    grid-template-columns : 3fr 3fr 8fr 3fr 3fr;
+    grid-template-rows    : 3fr 10fr 6fr 6fr 3fr;
+    grid-template-areas   : 
+      "money   title   title  title    joker"
+      "wins    wins    wins    wins    wins"
+      "deck    deck    .       .       ."
+      "table   table   table   table   table"
+      "control control control control control"
+    ;
+  }
+  
+  .control {
+    --control-height: 7vh;
+    --control-width :  14vw;
   }
 }
 
@@ -49,14 +76,18 @@ body {
   .game {
     --layout              : 'landscape';
     grid-template-columns : 2fr 4fr 4fr 4fr 3fr 3fr;
-    grid-template-rows    : 1fr 1fr 4fr 4fr 8fr;
+    grid-template-rows    : 1fr 4fr 4fr 8fr 2fr;
     grid-template-areas   :
-      "money  title title title title joker"
-      "info   info  info  info  info  info"
-      "deck   deck  .     wins  wins  wins"
-      "deck   deck  .     wins  wins  wins"
-      "table  table table table table table"
+      "money   title   title   title   title   joker"
+      "deck    deck    .       wins    wins    wins"
+      "deck    deck    .       wins    wins    wins"
+      "table   table   table   table   table   table"
+      "control control control control control control"
     ;
+  }
+  .control {
+    --control-height: 7vh;
+    --control-width : 14vw;
   }
 }
 
@@ -202,13 +233,20 @@ body {
 }
 
 .card.left {
-  --stack-offset: 10%;
+  --stack-offset: 0%;
   left          : var(--stack-offset);
 }
 
 .card.right {
-  --stack-offset: 30%;
+  --stack-offset: 20%;
   left          : var(--stack-offset);
+}
+
+/* card placeholders on the table */
+.card.hand.placeHolder {
+  background-color  : transparent;
+  border            : 1vmax solid #6F6;
+  z-index           : 1;
 }
 
 /* looser card stacks on the table */
@@ -274,17 +312,17 @@ body {
 }
 
 .winTableCell.currentBet {
-  border-left               : 0.5vmin solid var(--border-color);
-  border-right              : 0.5vmin solid var(--border-color);
+  border-left               : 0.5vmax solid var(--border-color);
+  border-right              : 0.5vmax solid var(--border-color);
 }
 .winTableRow:first-child>.winTableCell.currentBet {
-  border-top                : 0.5vmin solid var(--border-color);
+  border-top                : 0.5vmax solid var(--border-color);
   border-top-left-radius    : var(--radius);
   border-top-right-radius   : var(--radius);
 }
 
 .winTableRow:last-child>.winTableCell.currentBet {
-  border-bottom             : 0.5vmin solid var(--border-color);
+  border-bottom             : 0.5vmax solid var(--border-color);
   border-bottom-left-radius : var(--radius);
   border-bottom-right-radius: var(--radius);
 }
@@ -310,58 +348,39 @@ body {
   box-shadow  : inset 0 0 3vmin white;
 }
 
-/* event handler placeholders */
-
 .control {
   z-index: 100;
 }
 
-.control.deck,
-.control.left,
-.control.right {
-  /* card size + 20% */
-  --control-width   : calc(0.16 * var(--game-width) * 1.2);
-  --control-height  : calc(1.4  * var(--control-width));  
-  min-width         : var(--control-width);
-  min-height        : var(--control-height);
+.control {
+  height            : var(--control-height);
+  width             : calc(2 * var(--control-height));
+  max-width         : 18vw;
+  background-color  : lightgray;
+  color             : gray;
+  font-weight       : bold;
   position          : relative;
-}
-@media (min-aspect-ratio: 3/2) {
-  .control.deck,
-  .control.left,
-  .control.right {
-    /* card size + 15% */
-    --control-height-fraction : 0.34;
-    --control-height          : calc(var(--control-height-fraction) * var(--game-height) * 1.15);
-    --control-width           : calc(var(--control-height) / 1.4);
-    min-width                 : var(--control-width);
-    min-height                : var(--control-height);
-  }
+  grid-area         : control;
+  border            : 1px solid gray;
+  border-radius     : 60%;
+  display           : flex;
+  flex-direction    : column;
+  justify-content   : space-around;
 }
 
-/* debug mode */
-.control.deck.debug,
-.control.left.debug,
-.control.right.debug {
-  background-color: #fff6;
+.control.active {
+  background: radial-gradient(yellow, lightgray);
+  color     : black;
 }
 
-.control.deck {
-  grid-area : deck;
-  left      : calc(0.05 * var(--control-width));
-  top       : calc(0.03 * var(--control-height));
+.control.bet {
+  left: -40%;
 }
-.control.left {
-  grid-area : table;
-  left      : calc(0.05 * var(--control-width) + 10%);
-  top       : calc(0.03 * var(--control-height));
+
+.control.deal {
+  left: 40%;
 }
 
 .control.right {
-  grid-area : table;
-  left      : calc(0.05 * var(--control-width) + 30%);
-  top       : calc(0.03 * var(--control-height));
-}
-.control.bet {
-  grid-area: wins;
+  left: 20%;
 }

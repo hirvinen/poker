@@ -24,7 +24,7 @@ const WinTableRow = ({winningRow, title, cells, currentBet}) => {
   const WinTable = ({betButton, bet, wins, result}) => (
     <div className="winTable">
       <WinTableRow
-        title={betButton}
+        title="Win / Bet"
         cells={bet.values()}
         currentBet={bet.index}
       />

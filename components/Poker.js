@@ -1,4 +1,6 @@
 const shuffle = require('lodash/shuffle')
+const map = require('lodash/map')
+
 import {createDeck, Joker}    from '../lib/deck'
 import {wins, nullWin}        from '../lib/quick_poker'
 import {
@@ -11,6 +13,7 @@ import classify               from './classify'
 import WinTable               from './WinTable'
 import Card                   from './Card'
 import StatusLine             from './Statusline'
+import ControlButton          from './ControlButton'
 
 const PokerTitle = () => <div className="title"><h1>QuickPoker</h1></div>
 const PokerInfo  = ({instruction}) => (
@@ -45,6 +48,8 @@ class Game extends React.Component {
       'left'          : 'Analyzing hand results',
       'right'         : 'Analyzing hand results',
     }
+
+
     // to simplify handleKeyDown
     this.keyToActionMap = {
       ' '         : 'deal',
@@ -64,6 +69,33 @@ class Game extends React.Component {
     this.handleClick    = this.handleClick.bind(this)
     this.handleKeyDown  = this.handleKeyDown.bind(this)
     this.handleResult   = this.handleResult.bind(this)
+    // onClick wrappers for controls
+    this.handleLeft   = () => this.handleAction('left')
+    this.handleDeal   = () => this.handleAction('deal')
+    this.handleRight  = () => this.handleAction('right')
+    this.handleBet    = () => this.handleAction('bet')
+    this.controlStateMap = {
+      'deal'  : {
+        activePhase : 'roundFinished',
+        name        : 'Deal',
+        onClick     : this.handleDeal,
+      },
+      'left'  : {
+        activePhase : 'handDealt',
+        name        : 'Left',
+        onClick     : this.handleLeft,
+      },
+      'right' : {
+        activePhase : 'handDealt',
+        name        : 'Right',
+        onClick     : this.handleRight,
+      },
+      'bet'   : {
+        activePhase : 'roundFinished',
+        name        : 'Bet',
+        onClick     : this.handleBet,
+      },
+    }
   }
 
   toggleDebugMode () {
@@ -229,16 +261,14 @@ class Game extends React.Component {
     // only hanlde queued actions on dealing for now
     switch (action) {
     case 'deal':
-      if ((gamePhase === 'start' || gamePhase === 'roundFinished') &&
-          money >= bet.value) {
+      if (gamePhase === 'roundFinished' && money >= bet.value) {
         this.handleActionQueue()
         return this.deal(), true
       }
 
       return false
     case 'bet':
-      if ((gamePhase === 'start' || gamePhase === 'roundFinished') &&
-          !jokerInDeck) {
+      if (gamePhase === 'roundFinished' && !jokerInDeck) {
         return this.increaseBet(), true
       }
       
@@ -327,29 +357,44 @@ class Game extends React.Component {
     )
   }
 
+  renderCardPlaceHolders () {
+    return (
+      <React.Fragment>
+        <div className="card hand placeHolder" style={{ "--card-order": 0 }} />
+        <div className="card hand placeHolder" style={{ "--card-order": 1 }} />
+        <div className="card hand placeHolder" style={{ "--card-order": 2 }} />
+        <div className="card hand placeHolder" style={{ "--card-order": 3 }} />
+        <div className="card hand placeHolder" style={{ "--card-order": 4 }} />
+      </React.Fragment>
+    )
+  }
+
   renderAddingJoker () {
     return <Card card={{...Joker, order: 0, position:'joker'}} />
   }
 
   renderControls () {
-    const classes = this.state.debugMode ? "control debug" : "control"
     return (
       <React.Fragment>
-        <div className={classes + " deck" } onClick={ () => this.handleClick('deal')  } />
-        <div className={classes + " left" } onClick={ () => this.handleClick('left')  } />
-        <div className={classes + " right"} onClick={ () => this.handleClick('right') } />
-        <div className={classes + " bet"  } onClick={ () => this.handleClick('bet')   } />
+        {map(this.controlStateMap, (actionConfig, actionKey) => (
+          <ControlButton
+            name={actionConfig.name}
+            debug={this.state.debugMode}
+            active={this.state.gamePhase === actionConfig.activePhase}
+            onClick={actionConfig.onClick}
+            key={actionKey}
+          />
+        ))}
       </React.Fragment>
     )
   }
 
   render () {
-    const betButton  = <button onClick={() => this.handleClick('bet')}>BET</button>
     return (
       <div
         className="game">
         <PokerTitle />
-        <PokerInfo instruction={this.instructionMap[this.state.gamePhase]} />
+        {false && <PokerInfo instruction={this.instructionMap[this.state.gamePhase]} />}
         <StatusLine
           money={this.state.money}
           jokerRounds={this.state.jokerRounds}
@@ -357,10 +402,10 @@ class Game extends React.Component {
         <WinTable
           wins={this.props.wins}
           bet={this.state.bet}
-          betButton={betButton}
           result={this.state.result}
         />
         {this.renderCards()}
+        {this.renderCardPlaceHolders()}
         {this.state.jokerAdded && this.renderAddingJoker()}
         {this.renderControls()}
         {this.state.debugMode && <div id="test" style={{"--card-order":0}} /> }
