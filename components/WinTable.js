@@ -21,7 +21,7 @@ const WinTableRow = ({winningRow, title, cells, currentBet}) => {
     <div className={['winTableCell', ...classes].join(' ')}>{content}</div>
   )
   
-  const WinTable = ({betButton, bet, wins, result}) => (
+  const WinTable = ({bet, wins, result}) => (
     <div className="winTable">
       <WinTableRow
         title="Win / Bet"
