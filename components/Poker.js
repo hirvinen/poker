@@ -1,5 +1,4 @@
 const shuffle = require('lodash/shuffle')
-const map     = require('lodash/map')
 import {createDeck, Joker}    from '../lib/deck'
 import {wins, nullWin}        from '../lib/quick_poker'
 import {
@@ -9,73 +8,13 @@ import {
   getKeyboardHandler,
 }                             from '../lib/helpers'
 import classify               from './classify'
+import WinTable               from './WinTable'
+import Card                   from './Card'
+import StatusLine             from './Statusline'
 
-const Card = (props) => {
-  const card = props.card
-  const {order, position, suit: {color}} = card
-  const baseClasses = ['card', position, color]
-  const hidden = position === 'deck' || (order > 0 && position != 'hand')
-  const classes= hidden ? [...baseClasses, 'hidden'] : [...baseClasses, 'shown']
-  return (
-    <div
-      style={{'--card-order': order}}
-      data-order={order}
-      className={classes.join(' ')}
-      onClick={props.onClick}
-    >
-        {hidden || card.toString()}
-    </div>
-  )
-}
-
-const WinTableRow = (props) => {
-  const rowClass = props.winningRow ? "winTableRow lastWin" : "winTableRow"
-  return (
-    <div className={rowClass}>
-      <div className="winTableCell winLabel">{props.title}</div>
-      {props.cells.map((value, index) => {
-        const className = index === props.currentBet ? "winTableCell currentBet" : "winTableCell otherBet"
-        return <div className={className} key={props.title + value}>{Math.floor(value) < value ? value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : value}</div>
-      })}
-    </div>
-  )
-}
-
-const WinTable = (props) => (
-  <div className="winTable">
-    <WinTableRow
-      title={props.betButton}
-      cells={props.bet.values()}
-      currentBet={props.bet.index}
-      winningRow={false}
-    />
-    {map(props.wins, (win, winKey) => {
-      const winningRow = winKey === props.result
-      return (
-        <WinTableRow
-          title={win.description}
-          cells={props.bet.values().map(value => roundToPrecision(value*win.multiplier,1))}
-          key={winKey}
-          currentBet={props.bet.index}
-          winningRow={winningRow}
-        />
-      )}
-    )}
-  </div>
-)
-
-const PokerTitle = (props) => <div className="title"><h1>QuickPoker</h1></div>
-const PokerInfo  = (props) => {
-  const infoText = <p>Click the deck to deal two cards, then choose left or right stack to complete your hand</p>
-  return <div className="info">{infoText}</div>
-}
-
-const StatusLine = (props) => (
-  <React.Fragment>
-    <div className="money">{props.money.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-    {/*<div className="result">{`Result: ${props.result}`}</div>*/}
-    <div className="jokerRounds" data-label="🃏">{props.jokerRounds}</div>
-  </React.Fragment>
+const PokerTitle = () => <div className="title"><h1>QuickPoker</h1></div>
+const PokerInfo  = ({instruction}) => (
+  <div className="info">{instruction}</div>
 )
 
 class Game extends React.Component {
@@ -95,11 +34,17 @@ class Game extends React.Component {
       jokerRounds       : 0,
       jokerInDeck       : false,
       round             : 0,
-      gamePhase         : 'start',
+      gamePhase         : 'roundFinished',
       result            : 'none',
       actionQueue       : [],
     }
 
+    this.instructionMap = {
+      'roundFinished' : 'Click deck to deal or increase bet.',
+      'handDealt'     : 'Select left or right stack',
+      'left'          : 'Analyzing hand results',
+      'right'         : 'Analyzing hand results',
+    }
     // to simplify handleKeyDown
     this.keyToActionMap = {
       ' '         : 'deal',
@@ -404,7 +349,7 @@ class Game extends React.Component {
       <div
         className="game">
         <PokerTitle />
-        <PokerInfo />
+        <PokerInfo instruction={this.instructionMap[this.state.gamePhase]} />
         <StatusLine
           money={this.state.money}
           jokerRounds={this.state.jokerRounds}
