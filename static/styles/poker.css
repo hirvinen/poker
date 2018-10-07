@@ -5,7 +5,6 @@
 :root {
   font-family           : sans-serif;
   --navigation-height   : calc(var(--navigation-line-height, 1.1) * 1rem);
-  --currency-label      : "€";
 }
 
 body {
@@ -15,6 +14,7 @@ body {
 .layout {
   border: none !important;
   min-height: 100vh;
+  overflow: hidden;
 }
 
 /* common to all game layouts */
@@ -27,68 +27,8 @@ body {
   --game-width  : 100vw;
   min-height    : var(--game-height);
   max-height    : var(--game-height);
-  --control-height: calc (0.9 * 3 / 26);
-}
-
-/* default layout */
-
-@media (max-aspect-ratio: 1/1) {
-  .game {
-    --layout              : 'portrait';
-    grid-template-columns : 3fr 3fr 8fr 3fr 3fr;
-    grid-template-rows    : 3fr 10fr 10fr 3fr;
-    grid-template-areas   : 
-      "money   title   title  title    joker"
-      "deck    deck    wins    wins    wins"
-      "table   table   table   table   table"
-      "control control control control control"
-    ;
-  }
-  
-  .control {
-    --control-height: 7vh;
-    --control-width :  14vw;
-  }
-}
-
-/* really tall phones etc. */
-@media (max-aspect-ratio: 1/2) {
-  .game {
-    --layout              : 'portrait';
-    grid-template-columns : 3fr 3fr 8fr 3fr 3fr;
-    grid-template-rows    : 3fr 10fr 6fr 6fr 3fr;
-    grid-template-areas   : 
-      "money   title   title  title    joker"
-      "wins    wins    wins    wins    wins"
-      "deck    deck    .       .       ."
-      "table   table   table   table   table"
-      "control control control control control"
-    ;
-  }
-  
-  .control {
-    --control-height: 7vh;
-    --control-width :  14vw;
-  }
-}
-
-@media (min-aspect-ratio: 1 / 1) {
-  .game {
-    --layout              : 'landscape';
-    grid-template-columns : 2fr 4fr 4fr 4fr 3fr 3fr;
-    grid-template-rows    : 1fr 4fr 4fr 8fr 2fr;
-    grid-template-areas   :
-      "money   title   title   title   title   joker"
-      "deck    deck    .       wins    wins    wins"
-      "deck    deck    .       wins    wins    wins"
-      "table   table   table   table   table   table"
-      "control control control control control control"
-    ;
-  }
-  .control {
-    --control-height: 7vh;
-    --control-width : 14vw;
-  }
+  overflow      : hidden;
+  position      : relative;
 }
 
 .game>* {
@@ -96,82 +36,25 @@ body {
   align-self  : center;
 }
 
-.game .money {
+/* status elements */
+.money {
+  grid-area: money;
   justify-self: start;
   margin-left : 2vw;
 }
-.game .jokerRounds {
+.jokerRounds {
+  grid-area: joker;
   justify-self: end;
   margin-right: 2vw;
 }
-
-.game .money,
-.game .title,
-.game .jokerRounds {
-  margin-top: 1vh;
-}
-
-.game h1,
-.game p {
-  margin: 0;
-}
-
-/* grid areas */
-
-.money {
-  grid-area: money;
-}
-
-.result {
-  grid-area: result;
-}
-
-.bet {
-  grid-area: bet;
-}
-
-.jokerRounds {
-  grid-area: joker;
-}
-
 .title {
   grid-area: title;
-}
-
-.info {
-  grid-area: info;
-}
-
-.winTable {
-  grid-area: wins
-}
-
-.deck {
-  grid-area: deck;
-}
-
-.hand,
-.left,
-.right {
-  grid-area: table;
+  font-size: 2em;
 }
 
 .money, .jokerRounds {
-  display     : flex;
-  align-items : center;
   font-size   : 2em;
 }
-
-/* status area labels */
-
-.money::before {
-  content: var(--currency-label);
-}
-
-.jokerRounds::before {
-  content: attr(data-label)
-}
-/* other card styling */
 
 #test::before{
   display: block;
@@ -186,92 +69,13 @@ body {
   --card-height   : calc(1.4 * var(--card-width));  
   width           : var(--card-width);
   height          : var(--card-height);
-}
-
-.card {
-  --card-width    : calc(0.16 * var(--game-width));
-  --card-height   : calc(1.4 * var(--card-width));  
-  --stack-offset  : 0%;
-  --hiding-offset : 0.04vh;
-  border          : 0.1px solid lightgray;
-  font-size       : calc(var(--card-height) * 0.2);
-  width           : var(--card-width);
-  height          : var(--card-height);
-  border-radius   : calc(0.04 * var(--card-height));
-  background      : white;
-  display         : flex;
-  flex-direction  : column;
-  justify-content : space-around;
-  position        : relative;
-  z-index         : calc(60 - var(--card-order, 0));
-}
-
-@media (min-aspect-ratio: 3/2) {
-  .card {
-    --card-height-fraction : 0.34;
-    --card-height           : calc(var(--card-height-fraction) * var(--game-height));
-    --card-width            : calc(var(--card-height) / 1.4);
-  }
-}
-
-.card.red {
-  color: red;
-}
-
-.card.black {
-  color: black;
-}
-
-.card.blue {
-  color: blue;
-}
-
-/* spread out cards on the table */
-.card.hand {
-  --hand-offset : calc(var(--card-order) - 2);
-  left          : calc(20% * var(--hand-offset));
-}
-
-.card.left {
-  --stack-offset: 0%;
-  left          : var(--stack-offset);
-}
-
-.card.right {
-  --stack-offset: 20%;
-  left          : var(--stack-offset);
-}
-
-/* card placeholders on the table */
-.card.hand.placeHolder {
-  background-color  : transparent;
-  border            : 1vmax solid #6F6;
-  z-index           : 1;
-}
-
-/* looser card stacks on the table */
-.card.left,
-.card.right {
-    --hiding-offset : 1vh;
-}
-
-.card.hidden {
-  border    : 0.7vh solid white;
-  background: radial-gradient(#88F, #66A);
-  top       : calc(var(--hiding-offset) * var(--card-order, 0));
-  left      : calc(var(--stack-offset, 0) + (var(--hiding-offset) * var(--card-order, 0)));
-}
-
-/* joker position */
-.card.joker {
-  position: absolute;
-  top : calc(0.5 * var(--game-height) - 0.5 * var(--card-height));
-  left: calc(0.5 * var(--game-width)  - 0.5 * var(--card-width));
+  z-index         : 100;
 }
 
 /* win table */
 
 .winTable {
+  grid-area: wins;
   display   : table;
   font-size : calc(0.02 * var(--game-height))
 }
@@ -284,7 +88,7 @@ body {
   background-color: var(--odd-row-color);
 }
 
-.winTableRow:nth-child(even)>.winTableCell.winLabel {
+.winTableRow>.winTableCell.winLabel {
   border-bottom-left-radius : var(--radius);
   border-top-left-radius    : var(--radius);
 }
@@ -296,7 +100,6 @@ body {
 
 .winTableCell {
   --odd-row-color  : #090;
-  --separator-color: white;
   --radius         : 1vh;
   display          : table-cell;
   text-align       : right;
@@ -304,7 +107,6 @@ body {
   padding-bottom   : 0.2em;
   padding-left     : 0.5em;
   padding-right    : 0.5em;
-  /*border-left      : 0.3vmin solid white;*/
 }
 
 .currentBet {
@@ -327,14 +129,9 @@ body {
   border-bottom-right-radius: var(--radius);
 }
 
-.winTableCell.currentBet + .winTableCell {
-  border                    : none;
-}
-
 .winTableCell:first-child {
   text-align                : left;
   padding-left              : 0.3em;
-  border                    : none;
 }
 
 .winTableCell:last-child {
@@ -350,6 +147,10 @@ body {
 
 .control {
   z-index: 100;
+}
+
+.control {
+ --control-height: 7vh;
 }
 
 .control {
@@ -383,4 +184,165 @@ body {
 
 .control.right {
   left: 20%;
+}
+/* card position variables common to all layouts */
+
+.card {
+  --deck-vertical-offset  : -100%;
+  --deck-horizontal-offset: -30%;
+   /* use deck positioning as default position to simplify transitions */
+  grid-area               : table;
+  --card-vertical-offset  : var(--deck-vertical-offset);
+  --card-horizontal-offset: var(--deck-horizontal-offset);
+}
+
+
+.card {
+  --card-width              : calc(0.16 * var(--game-width));
+  --card-height             : calc(1.4 * var(--card-width));  
+  --hiding-offset           : 0.04vh;
+  border                    : 0.1px solid lightgray;
+  font-size                 : calc(var(--card-height) * 0.2);
+  width                     : var(--card-width);
+  height                    : var(--card-height);
+  border-radius             : calc(0.04 * var(--card-height));
+  background                : white;
+  display                   : flex;
+  flex-direction            : column;
+  justify-content           : space-around;
+  position                  : relative;
+  z-index                   : calc(60 - var(--card-order, 0));
+}
+
+.card.red {
+  color: red;
+}
+
+.card.black {
+  color: black;
+}
+
+.card.joker {
+  color: blue;
+}
+/*
+Default position for cards now
+.deck {
+  grid-area: table;
+  --card-vertical-offset  : -100%;
+  --card-horizontal-offset: -30%;
+}
+*/
+/*
+Now all cards on the table
+.hand,
+.left,
+.right {
+  grid-area: table;
+}
+*/
+
+/* spread out cards on the table */
+.card.hand,
+.card.left,
+.card.right {
+  --card-horizontal-offset: calc(20% * (var(--card-order) - 2));
+  left                    : var(--card-horizontal-offset);
+  top                     : 0%;
+}
+
+.card.left {
+  --card-horizontal-offset: 0%;
+}
+
+.card.right {
+  --card-horizontal-offset: 20%;
+}
+
+/* card placeholders on the table */
+.card.placeHolder {
+  background-color  : transparent;
+  z-index           : 1;
+  border            : calc(0.03*var(--card-width)) solid #6F6;
+}
+
+/* looser card stacks on the table */
+.card.left.hidden,
+.card.right.hidden {
+  --hiding-offset       : 1vh;
+  --card-vertical-offset: 0%;
+}
+
+.card.hidden {
+  border    : 0.7vh solid white;
+  /* background: radial-gradient(#88F, #66A); */
+  background: content-box url('/static/img/card-background.png') center/contain;
+  top       : calc(var(--card-vertical-offset, 0%) + var(--hiding-offset) * var(--card-order, 0));
+  left      : calc(var(--card-horizontal-offset, 0%) + (var(--hiding-offset) * var(--card-order, 0)));
+}
+
+/* joker initially hidden position */
+.card.joker.initiallyHidden {
+  position: relative;
+  top     : -100%;
+  left    : -10%;
+  z-index : -1;
+}
+
+/* Default layout 
+@media (min-aspect-ratio: 1/2) and (max-aspect-ratio: 1/1)
+*/
+.game {
+  --layout              : 'portrait';
+  grid-template-columns : 3fr 3fr 8fr 3fr 3fr;
+  grid-template-rows    : 3fr 10fr 10fr 3fr;
+  grid-template-areas   : 
+    "money   title   title  title    joker"
+    "deck    deck    wins    wins    wins"
+    "table   table   table   table   table"
+    "control control control control control"
+  ;
+}
+
+/* really tall phones etc. */
+@media (max-aspect-ratio: 1/2) {
+  .game {
+    --layout              : 'supertall';
+    grid-template-columns : 3fr 3fr 8fr 3fr 3fr;
+    grid-template-rows    : 3fr 10fr 6fr 6fr 3fr;
+    grid-template-areas   : 
+      "money   title   title  title    joker"
+      "wins    wins    wins    wins    wins"
+      "deck    deck    .       .       ."
+      "table   table   table   table   table"
+      "control control control control control"
+    ;
+  }
+  #test {
+    grid-area: deck;
+    position: relative;
+  }
+}
+
+@media (min-aspect-ratio: 1 / 1) {
+  .game {
+    --layout              : 'landscape';
+    grid-template-columns : 2fr 4fr 4fr 4fr 3fr 3fr;
+    grid-template-rows    : 2fr 4fr 4fr 8fr 2fr;
+    grid-template-areas   :
+      "money   title   title   title   title   joker"
+      "deck    deck    .       wins    wins    wins"
+      "deck    deck    .       wins    wins    wins"
+      "table   table   table   table   table   table"
+      "control control control control control control"
+    ;
+  }
+}
+
+@media (min-aspect-ratio: 3/2) {
+  .card {
+    --card-height-fraction : 0.34;
+    --card-height           : calc(var(--card-height-fraction) * var(--game-height));
+    --card-width            : calc(var(--card-height) / 1.4);
+  }
 }

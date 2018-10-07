@@ -1,12 +1,18 @@
 const Card = ({card}) => {
-    const {order, position, suit: {color}} = card
-    const baseClasses = ['card', position, color]
+    const {order, domOrder, position, suit: {color}} = card
     const hidden = position === 'deck' || (order > 0 && position != 'hand')
-    const classes= hidden ? [...baseClasses, 'hidden'] : [...baseClasses, 'shown']
+    const classes = [
+      'card',
+      position,
+      color,
+      ...(hidden ? ['hidden'] : ['shown']),
+    ]
     return (
       <div
-        style={{'--card-order': order}}
-        data-order={order}
+        style={{
+          '--card-order': order,
+          '--dom-order' : domOrder,
+        }}
         className={classes.join(' ')}
       >
           {hidden || card.toString()}
