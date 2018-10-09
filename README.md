@@ -25,3 +25,10 @@ A relatively current, possibly broken demo should be available at [https://poker
   * Fancier card faces
 * Stylesheets as components?
 * Restructure to use a preprocessor or style components directly?
+* Add some kinf of info modal
+* Classify
+  * Maybe refactor individual tests to assume the hand is sorted and only sort once in classify?
+* Probabilities
+  * Probabilities other than for pair 10-A should be working, but a simple test for that is difficult.
+  * Especially if unnecessarily sorting hands for every test in classify is removed, it may well be faster to just brute force the possible combinations than to run currently existing individual tests.
+* Testing
