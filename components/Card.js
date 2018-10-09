@@ -1,12 +1,25 @@
 const Card = ({card}) => {
-    const {order, domOrder, position, suit: {color}} = card
-    const hidden = position === 'deck' || (order > 0 && position != 'hand')
+    const {
+      order,
+      domOrder,
+      tablePosition,
+      show  = false,
+      hide  = false,
+      position, suit: {color},
+    } = card
+
+    //const hidden = position === 'deck' || (order > 0 && position != 'hand')
     const classes = [
       'card',
       position,
-      color,
-      ...(hidden ? ['hidden'] : ['shown']),
+      ...(show          ? ['show', color] : ['hidden']),
+      ...(hide          ? ['hide', color] : []),
+      ...(tablePosition ? [tablePosition] : [])
     ]
+    // Face needs to be shown in the beginning of the hide animation
+    const content = show || hide
+      ? card.toString()
+      : ''
     return (
       <div
         style={{
@@ -15,7 +28,7 @@ const Card = ({card}) => {
         }}
         className={classes.join(' ')}
       >
-          {hidden || card.toString()}
+          {content}
       </div>
     )
   }

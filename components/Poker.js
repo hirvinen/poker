@@ -15,31 +15,66 @@ import Card                   from './Card'
 import StatusLine             from './Statusline'
 import ControlButton          from './ControlButton'
 
-const PokerTitle = () => <div className="title"><h1>QuickPoker</h1></div>
+const PokerTitle = () => <div className="title">QuickPoker</div>
 const PokerInfo  = ({instruction}) => (
   <div className="info">{instruction}</div>
 )
+/**
+ * TODO: Move to a more sensible place.
+ * Joker is never actually added to or removed from the deck.
+ * If it is not in play, it will be kept as the last card in deck:
+ * order === deck.length - 1 while it is not in play
+ * When it is added, it will be displayed before being put into deck
+ * When last joker round is finished, it will be shown to be removed
+ * 
+ * Phase transitions
+ *  roundFinished     =>  prepareShuffling  (animate moving to deck)
+ *  prepareShuffling  =>  shuffling (shuffle, set position to deck)
+ *  shuffling         =>  dealing (animate dealing)
+ *  dealing           =>  handDealt (when cards revealed)
+ *  handDealt         =>  choiceMade (move discarded to deck and spread chosen)
+ *  choiceMade        =>  roundFinished (show results)
+ *  
+ */
 
 class Game extends React.Component {
   constructor(props) {
     super(props)
-    const deck = createDeck().map((card, index) => ({
+    const baseDeck = createDeck().map((card, index) => ({
       ...card,
       position: 'deck',
       order   : index,
     }))
+    const deck = [
+      ...baseDeck,
+      {
+        ...Joker,
+        position: 'initiallyHidden',
+        order   : baseDeck.length
+      }
+    ]
+    const orderArray = Array.from(
+      {length: deck.length},
+      (_, index) => index
+    )
     this.state = {
       debugMode         : false,
       deck              : deck,
-      joker             : Joker,
+      orderArray        : orderArray,
       money             : 20,
       bet               : createBet(),
       jokerRounds       : 0,
       jokerInDeck       : false,
+      removeJoker       : false,
       round             : 0,
       gamePhase         : 'roundFinished',
+      choice            : null,
       result            : 'none',
-      actionQueue       : [],
+      lastBetIndex      : 0,
+      /* avoid flash of semi-rendered cards */
+      deckTop           : 200,
+      deckLeft          : -1000,
+      tableTop          : 0,
     }
 
     this.instructionMap = {
@@ -52,8 +87,8 @@ class Game extends React.Component {
 
     // to simplify handleKeyDown
     this.keyToActionMap = {
-      ' '         : 'deal',
-      'ArrowDown' : 'deal',
+      ' '         : 'newGame',
+      'ArrowDown' : 'newGame',
       'ArrowLeft' : 'left',
       'ArrowRight': 'right',
       'ArrowUp'   : 'bet',
@@ -66,19 +101,20 @@ class Game extends React.Component {
     }
     this.keyboardHandlerId  = null
     // bind event handlers
+    this.handleResize   = this.handleResize.bind(this)
     this.handleClick    = this.handleClick.bind(this)
     this.handleKeyDown  = this.handleKeyDown.bind(this)
     this.handleResult   = this.handleResult.bind(this)
     // onClick wrappers for controls
     this.handleLeft   = () => this.handleAction('left')
-    this.handleDeal   = () => this.handleAction('deal')
     this.handleRight  = () => this.handleAction('right')
+    this.handleNewGame= () => this.handleAction('newGame')
     this.handleBet    = () => this.handleAction('bet')
     this.controlStateMap = {
-      'deal'  : {
+      'newGame'  : {
         activePhase : 'roundFinished',
         name        : 'Deal',
-        onClick     : this.handleDeal,
+        onClick     : this.handleNewGame,
       },
       'left'  : {
         activePhase : 'handDealt',
@@ -96,6 +132,25 @@ class Game extends React.Component {
         onClick     : this.handleBet,
       },
     }
+    /*
+      add a small delay between
+        * resetting deck,
+        * shuffling,
+        * dealing,
+        * enabling choice controls
+    */
+    const defaultDelay          = 1100
+    this.prepareShuffling       = this.prepareShuffling.bind(this)
+    this.shuffle                = this.shuffle.bind(this)
+    this.shuffleAfterDelay      = (delay=defaultDelay) => setTimeout(this.shuffle, delay)
+    this.deal                   = this.deal.bind(this)
+    this.dealAfterDelay         = (delay=defaultDelay) => setTimeout(this.deal, delay)
+    this.finishDealing          = this.finishDealing.bind(this)
+    this.finishDealingAfterDelay= (delay=defaultDelay) => setTimeout(this.finishDealing, delay)
+    this.handleResult           = this.handleResult.bind(this)
+    this.handleResultAfterDelay = (delay=defaultDelay) => setTimeout(this.handleResult, delay)
+    this.getTableAndDeckPositions = this.getTableAndDeckPositions.bind(this)
+
   }
 
   toggleDebugMode () {
@@ -109,42 +164,7 @@ class Game extends React.Component {
       bet: bet.increment().limit(money)
     }))
   }
-  
-  deal () {
-    // get a random ordering
-    const orderArray = shuffle(Array.from(
-      {length: this.state.deck.length},
-      (_, index) => index
-    ))
-    // assign order to cards
-    const deck = this.state.deck.map((card, index) => {
-      const order = orderArray[index]
-      switch (order) {
-      case 0:
-      case 1:
-        return {...card, order,            position: 'hand'}
-      case 2:
-      case 3:
-      case 4:
-        return {...card, order: order - 2, position: 'left'}
-      case 5:
-      case 6:
-      case 7:
-        return {...card, order: order - 5, position: 'right'}
-      default:
-        return {...card, order: order - 8, position: 'deck'}
-      }
-    })
-    
-    this.setState( ({money, round, bet, jokerRounds}) => ({
-      deck,
-      money       : roundToPrecision(money - bet.value,1),
-      gamePhase   : 'handDealt',
-      round       : round + 1,
-      jokerRounds : jokerRounds >= 1 ? jokerRounds - 1 : 0,
-    }))
-  }
-  
+
   addMoney (amount = 10) {
     this.setState( ({money}) => ({
       money: roundToPrecision(money + amount, 1)
@@ -152,18 +172,13 @@ class Game extends React.Component {
   }
 
   addJokerRounds (count = 10) {
-    // If joker was not in the deck, show it but do not add it to the deck yet
-    if (!this.state.jokerInDeck) {
-      this.setState( ({actionQueue}) => ({
-        jokerAdded  : false,
-        actionQueue : [...actionQueue, 'addJokerToDeck']
-      }))
-    }
-
-    // Joker already in deck, so just add joker rounds
     this.setState( ({jokerRounds}) => ({
       jokerRounds: jokerRounds + count
     }))
+    // Only add the joker if it was not already present
+    if (!this.state.jokerInDeck) {
+      this.addJokerToDeck()
+    }
   }
 
   addJokerToDeck () {
@@ -171,8 +186,10 @@ class Game extends React.Component {
     if (!this.state.jokerInDeck) {
       this.setState( ({deck}) => ({
         jokerInDeck : true,
-        jokerAdded  : false,
-        deck        : [...deck, {...Joker, position: 'deck', order: 52}]
+        deck        : [
+          ...deck.slice(0,-1),
+          {...Joker, position: 'jokerAdded', order: deck.length - 1, show: true}
+        ]
       }))
     } else {
       throw Error('Deck already had a Joker')
@@ -181,44 +198,178 @@ class Game extends React.Component {
 
   removeJokerFromDeck () {
     if (this.state.jokerInDeck) {
-      this.setState( ({deck}) => ({
-        jokerInDeck : false,
-        deck        : deck.filter(card => card.value !== 0)
-      }))
+      // The deck itself will only be modified before next shuffle
+      this.setState( {
+        removeJoker: true,
+        jokerInDeck: false,
+      } )
     } else {
       throw Error('Deck does not have a Joker')
     }
   }
   
-  choose (choice) {
-    this.setState( ({deck, gamePhase}) => {
-      if (gamePhase !== 'handDealt') {
-        return {}
+  newGame () {
+    // first, return all cards to deck, subtract money etc, then shuffle
+    this.setState ( ({money, round, bet, jokerRounds, gamePhase}) => {
+      // guard against input events having fired twice before state transition. Is this necessary? TODO FIXME
+      if (gamePhase !== 'roundFinished') return {}
+
+      return {
+        money       : roundToPrecision(money - bet.value,1),
+        lastBetIndex: bet.index,
+        gamePhase   : 'prepareShuffling',
+        round       : round + 1,
+        jokerRounds : jokerRounds >= 1 ? jokerRounds - 1 : 0,
+        result      : 'none',
       }
-      const toDeck          = (choice === 'left') ? 'right' : 'left'
-      const orderIncrement  = deck.length - 8
-      const deckAfterChoice = deck.map(card => {
-        const {position, order} = card
-        if (position === toDeck) {
-          return {...card, order: order + orderIncrement, position: 'deck'}
-        } else if (position === choice) {
-          return {...card, order: order + 2,              position: 'hand'}
+    }, this.prepareShuffling)
+  }
+
+  prepareShuffling () {
+    console.log((new Date()).toISOString(), this.state.gamePhase)
+    // no need to set card positions, they will be moved based on game phase, only remove Joker if necessary
+    if (this.state.removeJoker) {
+      this.setState( ({deck}) => {
+        // If joker was in the deck, show it while removing, or if on the table, just hide it.
+        const [joker] = deck.slice(-1)
+        const jokerPosition = joker.order < 5
+          ? 'jokerRemoved fromTable'
+          : 'jokerRemoved fromDeck'
+        const deckWithoutJoker = [
+          ...deck.slice(0, -1),
+          {...Joker, order: deck.length -1, position: jokerPosition}
+        ]
+        return {
+          deck        : deckWithoutJoker,
+          removeJoker : false,
+        }
+      })
+    }
+    // no delay on first round
+    if (this.state.round === 1) return this.shuffle()
+
+    this.shuffleAfterDelay()
+  }
+
+  shuffle () {
+    console.log((new Date()).toISOString(), this.state.gamePhase)
+    this.setState( ({deck, jokerInDeck}) => {
+      // get a random ordering
+      const cardsInGame = jokerInDeck ? deck.length : deck.length - 1
+      const orderArray = shuffle(Array.from(
+        {length: cardsInGame},
+        (_, index) => index
+      ))
+
+      // assign order to cards while resetting their position
+      const shuffledDeck = deck.map((card, index) => {
+        if (index < orderArray.length) {
+          return {
+            ...card,
+            order         : orderArray[index],
+            position      : 'deck',
+            show          : false,
+            hide          : false,
+          }
         }
 
-        // already in deck
+        // If joker is not included in the ordering, do not include it in the shuffling
         return card
       })
-      
+      console.log((new Date()).toISOString(), this.state.gamePhase)
       return {
-        deck      : deckAfterChoice,
-        gamePhase : choice,
+        deck          : shuffledDeck,
+        gamePhase     : 'shuffling',
       }
-    }, this.handleResult)
+    }, this.dealAfterDelay)
+  }
+
+  deal () {
+    console.log((new Date()).toISOString(), this.state.gamePhase)
+    this.setState( ({deck}) => {
+      const position  = 'table'
+      const show      = true
+      const deckAfterDealing = deck.map( card => {
+        if (card.order >= 8) return card
+
+        const {order} = card
+        switch (order) {
+          case 0:
+          case 1:
+            return {...card, position, show}
+          case 2:
+            // only reveal topmost of left
+            return {...card, position, show, tablePosition: 'left'}
+          case 3:
+          case 4:
+            return {...card, position,       tablePosition: 'left'}
+          case 5:
+            // only reveal topmost of right
+            return {...card, position, show, tablePosition: 'right', order: order - 3}
+          case 6:
+          case 7:
+            return {...card, position,       tablePosition: 'right', order: order - 3}
+        }
+      })
+      console.log((new Date()).toISOString(), this.state.gamePhase)
+      return {
+        deck      : deckAfterDealing,
+        gamePhase : 'dealing',
+      }
+    }, this.finishDealingAfterDelay)
+  }
+
+  finishDealing () {
+    console.log((new Date()).toISOString(), this.state.gamePhase)
+    this.setState( {gamePhase : 'handDealt'} )
   }
   
+  choose (choice) {
+    console.log((new Date()).toISOString(), this.state.gamePhase)
+    const toDeck            = (choice === 'left') ? 'right' : 'left'
+    const toTable           = (choice === 'left') ? 'left'  : 'right'
+    this.setState( ({gamePhase, deck}) => {
+      // guard against input events having fired twice before state transition. Is this necessary? TODO FIXME
+      if (gamePhase !== 'handDealt') return {}
+
+      const deckAfterChoice = deck.map( card => {
+        const {order, tablePosition, position, show=false} = card
+        // deck or already in hand
+        if (!tablePosition) return card
+
+        switch (tablePosition) {
+        case toDeck:
+          // only apply hiding to topmost
+          const hideProps = show ? {show: false, hide: true} : {}
+          return {
+            ...card,
+            ...hideProps,
+            position      : 'discarded',
+            tablePosition : null,
+          }
+        case toTable:
+          // topmost already revealed
+          const showProps = show ? {} : {show: true}
+          return {
+            ...card,
+            ...showProps,
+            tablePosition : null,
+          }
+        }
+      })
+      console.log((new Date()).toISOString(), this.state.gamePhase)
+      return {
+        choice,
+        deck      : deckAfterChoice,
+        gamePhase : 'choiceMade',
+      }
+    }, this.handleResultAfterDelay)
+  }
+
   handleResult () {
+    console.log((new Date()).toISOString(), this.state.gamePhase)
     // final hand
-    const hand          = this.state.deck.filter(card => card.position === 'hand')
+    const hand          = this.state.deck.filter(card => card.position === 'table')
     const result        = classify(hand)
 
     // money handling
@@ -243,9 +394,7 @@ class Game extends React.Component {
     }
     // Queue removing Joker from the deck if this was the last joker round
     if (jokerInDeck && jokerRounds === 0) {
-      this.setState( ({actionQueue}) => ({
-        actionQueue: [...actionQueue, 'removeJokerFromDeck']
-      }))
+      this.removeJokerFromDeck()
     }
 
     // show results and finish round
@@ -260,10 +409,9 @@ class Game extends React.Component {
     const {gamePhase, money, bet, jokerInDeck} = this.state
     // only hanlde queued actions on dealing for now
     switch (action) {
-    case 'deal':
+    case 'newGame':
       if (gamePhase === 'roundFinished' && money >= bet.value) {
-        this.handleActionQueue()
-        return this.deal(), true
+        return this.newGame(), true
       }
 
       return false
@@ -294,13 +442,6 @@ class Game extends React.Component {
     this.handleAction(action)
   }
 
-  handleActionQueue () {
-    // remove actions that get handled
-    this.setState( ({actionQueue}) => ({
-      actionQueue: actionQueue.filter(action => !this.handleAction(action))
-    }))
-  }
-
   handleKeyDown (event) {
     const knownKey = this.keyToActionMap.hasOwnProperty(event.key)
     if (knownKey) {
@@ -308,63 +449,64 @@ class Game extends React.Component {
     }
   }
 
-  componentDidMount () {    
+  getTableAndDeckPositions () {
+    const deckPlaceholder             = document.querySelector('.placeHolder.deck')
+    const {left:deckLeft, y: deckTop} = deckPlaceholder.getBoundingClientRect()
+    const tablePlaceHolder            = document.querySelector('.placeHolder.table')
+    const {top:tableTop}              = tablePlaceHolder.getBoundingClientRect()
+    return {
+      deckLeft  : roundToPrecision(deckLeft, 2),
+      deckTop   : roundToPrecision(deckTop,  2),
+      tableTop  : roundToPrecision(tableTop, 2),
+    }
+  }
+
+  handleResize () {
+    requestAnimationFrame(() => this.setState(this.getTableAndDeckPositions()))
+  }
+
+  componentDidMount () {
     this.keyboardHandlerId = this.props.keyboardHandler
       .registerHandler('keydown', this.handleKeyDown)
+    window.addEventListener('resize', this.handleResize)
+    this.setState(this.getTableAndDeckPositions)
   }
 
   componentWillUnmount () {
     if (this.keyboardHandlerId) {
       this.props.keyboardHandler.removeHandler(this.keyboardHandlerId)
     }
+    window.removeEventListener('resize', this.handleResize)
   }
  
  /*
   UPDATE: To avoid shuffling DOM nodes around, decouple deck order and DOM order.
-    * shuffle an array cardOrder containing numbers from 0 to 51 inclusive (52 if Joker in deck)
-    * Assign each card = deck[i] an order value of cardOrder[i]
+    * shuffle an array orderArray containing numbers from 0 to 51 inclusive (52 if Joker in deck)
+    * Assign each card = deck[i] an order value of orderArray[i]
       * For order <= 7, set position and new order
-        * (0,1)   : newOrder = (0,1),   position = hand
-        * (2,3,4) : newOrder = (0,1,2), position = left
-        * (5,6,7) : newOrder = (0,1,2), position = right
-      * For order > 7, subtract 7 from order (1-44(45)) and position to deck
-    * When cards are discarded, set position to deck and add 44(45) to order
-    * When cards are chosen, set position = hand and add 2 two order => (2,3,4)
-  TODO: Fix description below
-  Each card in the deck will be assigned an index equal to index in the deck.
-  That index will be used as their negative z-index when they are in a hidden state.
-  Position on the grid will be determined by the state of the game with this mapping:
-    1. When a hand has not been dealt, all cards will be in the deck.
-    2. When dealing, do a shuffle animation in the deck position (TODO)
-    3. When a hand is dealt:
-      * (0,1)       will be on the table 1-5 and 5-9 (hand)
-      * (2,3,4)     will be on the table 11-15 (left)
-      * (5,6,7)     will be on the table 16-20 (right)
-    4. When left or right is chosen
-      * (0,1)       will be on the table 1-5 and 5-9 (hand)
-      * <chosen>    will be on the table: 9-13, 13-17, 17-21
-      * <discarded> will be in the deck
-    5. When a joker is added to the deck, put it on the middle of the screen and then move to deck (TODO)
-    6. When a joker is removed from the deck, move it to the middle of the screen and vanish it. (TODO)
+        * (0,1)   : newOrder = (0,1)
+        * (2,3,4) : newOrder = (2,3,4), tablePosition = left
+        * (5,6,7) : newOrder = (2,3,4), tablePosition = right
  */
   renderCards () {
     return (
-      <React.Fragment>
-        {this.state.deck.map(card => (
-          <Card card={card} key={card.toString()} />
+      <div className="cards">
+        {this.state.deck.map( (card, index) => (
+          <Card card={card} key={card.toString()} domOrder={index} />
         ))}
-      </React.Fragment>
+      </div>
     )
   }
 
   renderCardPlaceHolders () {
     return (
       <React.Fragment>
-        <div className="card hand placeHolder" style={{ "--card-order": 0 }} />
-        <div className="card hand placeHolder" style={{ "--card-order": 1 }} />
-        <div className="card hand placeHolder" style={{ "--card-order": 2 }} />
-        <div className="card hand placeHolder" style={{ "--card-order": 3 }} />
-        <div className="card hand placeHolder" style={{ "--card-order": 4 }} />
+        <div className="placeHolder deck"  style={{ "--card-order": 0 }} />
+        <div className="placeHolder table" style={{ "--card-order": 0 }} />
+        <div className="placeHolder table" style={{ "--card-order": 1 }} />
+        <div className="placeHolder table" style={{ "--card-order": 2 }} />
+        <div className="placeHolder table" style={{ "--card-order": 3 }} />
+        <div className="placeHolder table" style={{ "--card-order": 4 }} />
       </React.Fragment>
     )
   }
@@ -380,7 +522,11 @@ class Game extends React.Component {
           <ControlButton
             name={actionConfig.name}
             debug={this.state.debugMode}
-            active={this.state.gamePhase === actionConfig.activePhase}
+            active={
+              actionKey === 'bet' // disable bet also visually if joker in play
+                ? this.state.gamePhase === actionConfig.activePhase && !this.state.jokerInDeck
+                : this.state.gamePhase === actionConfig.activePhase
+            }
             onClick={actionConfig.onClick}
             key={actionKey}
           />
@@ -392,9 +538,16 @@ class Game extends React.Component {
   render () {
     return (
       <div
-        className="game">
+        id="game"
+        className={this.state.gamePhase}
+        style={{
+          "--deck-top"  : `${this.state.deckTop}px`,
+          "--deck-left" : `${this.state.deckLeft}px`,
+          "--table-top" : `${this.state.tableTop}px`,
+        }}
+        >
         <PokerTitle />
-        {false && <PokerInfo instruction={this.instructionMap[this.state.gamePhase]} />}
+        {/* <PokerInfo instruction={this.instructionMap[this.state.gamePhase]} /> */}
         <StatusLine
           money={this.state.money}
           jokerRounds={this.state.jokerRounds}
@@ -403,12 +556,13 @@ class Game extends React.Component {
           wins={this.props.wins}
           bet={this.state.bet}
           result={this.state.result}
+          lastBetIndex={this.state.lastBetIndex}
         />
         {this.renderCards()}
         {this.renderCardPlaceHolders()}
         {this.state.jokerAdded && this.renderAddingJoker()}
         {this.renderControls()}
-        {this.state.debugMode && <div id="test" style={{"--card-order":0}} /> }
+        {this.state.debugMode && <div id="test" style={{"--card-order":0}}>{this.state.gamePhase}</div> }
       </div>
     )
   }
