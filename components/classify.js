@@ -77,7 +77,7 @@ const hasStraight = (hand) => {
       }
     }
   } else { // we do have a joker
-    handWithoutJoker = removeCard(sortedHand,Joker)
+    const handWithoutJoker = removeCard(sortedHand,Joker)
     // it's a straight if highest value is smaller than or equal to lowest value + hand length -1
     // since we have established that they are unique
     const [lowest, secondLowest, secondHighest, highest] = handWithoutJoker
