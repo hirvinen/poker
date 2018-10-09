@@ -226,7 +226,6 @@ class Game extends React.Component {
   }
 
   prepareShuffling () {
-    console.log((new Date()).toISOString(), this.state.gamePhase)
     // no need to set card positions, they will be moved based on game phase, only remove Joker if necessary
     if (this.state.removeJoker) {
       this.setState( ({deck}) => {
@@ -252,7 +251,6 @@ class Game extends React.Component {
   }
 
   shuffle () {
-    console.log((new Date()).toISOString(), this.state.gamePhase)
     this.setState( ({deck, jokerInDeck}) => {
       // get a random ordering
       const cardsInGame = jokerInDeck ? deck.length : deck.length - 1
@@ -276,7 +274,6 @@ class Game extends React.Component {
         // If joker is not included in the ordering, do not include it in the shuffling
         return card
       })
-      console.log((new Date()).toISOString(), this.state.gamePhase)
       return {
         deck          : shuffledDeck,
         gamePhase     : 'shuffling',
@@ -285,7 +282,6 @@ class Game extends React.Component {
   }
 
   deal () {
-    console.log((new Date()).toISOString(), this.state.gamePhase)
     this.setState( ({deck}) => {
       const position  = 'table'
       const show      = true
@@ -311,7 +307,6 @@ class Game extends React.Component {
             return {...card, position,       tablePosition: 'right', order: order - 3}
         }
       })
-      console.log((new Date()).toISOString(), this.state.gamePhase)
       return {
         deck      : deckAfterDealing,
         gamePhase : 'dealing',
@@ -320,12 +315,10 @@ class Game extends React.Component {
   }
 
   finishDealing () {
-    console.log((new Date()).toISOString(), this.state.gamePhase)
     this.setState( {gamePhase : 'handDealt'} )
   }
   
   choose (choice) {
-    console.log((new Date()).toISOString(), this.state.gamePhase)
     const toDeck            = (choice === 'left') ? 'right' : 'left'
     const toTable           = (choice === 'left') ? 'left'  : 'right'
     this.setState( ({gamePhase, deck}) => {
@@ -357,7 +350,6 @@ class Game extends React.Component {
           }
         }
       })
-      console.log((new Date()).toISOString(), this.state.gamePhase)
       return {
         choice,
         deck      : deckAfterChoice,
@@ -367,7 +359,6 @@ class Game extends React.Component {
   }
 
   handleResult () {
-    console.log((new Date()).toISOString(), this.state.gamePhase)
     // final hand
     const hand          = this.state.deck.filter(card => card.position === 'table')
     const result        = classify(hand)
