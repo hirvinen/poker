@@ -1,5 +1,4 @@
 const map = require('lodash/map')
-import {roundToPrecision} from '../lib/helpers'
 
 const WinTableRow = ({winningRow, title, cells, currentBet, lastBet = 0}) => {
     const rowClass = winningRow ? "winTableRow lastWin" : "winTableRow"
@@ -12,7 +11,7 @@ const WinTableRow = ({winningRow, title, cells, currentBet, lastBet = 0}) => {
               ...(currentBet === index ? ['currentBet'] : []),
               ...(lastBet    === index ? ['lastBet']    : []),
             ]}
-            content={Math.floor(value) < value ? value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : value}
+            content={value}
             key={title + value}
           />
         ))}
@@ -36,7 +35,7 @@ const WinTableRow = ({winningRow, title, cells, currentBet, lastBet = 0}) => {
       {map(wins, (win, winKey) => (
           <WinTableRow
             title={win.description}
-            cells={bet.values().map(value => roundToPrecision(value*win.multiplier,1))}
+            cells={bet.values().map(value => value*win.multiplier)}
             key={winKey}
             winningRow={winKey === result}
             currentBet={bet.index}

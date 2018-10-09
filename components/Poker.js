@@ -4,7 +4,6 @@ const map = require('lodash/map')
 import {createDeck, Joker}    from '../lib/deck'
 import {wins, nullWin}        from '../lib/quick_poker'
 import {
-  roundToPrecision,
   logDeck,
   createBet,
   getKeyboardHandler,
@@ -167,7 +166,7 @@ class Game extends React.Component {
 
   addMoney (amount = 10) {
     this.setState( ({money}) => ({
-      money: roundToPrecision(money + amount, 1)
+      money: money + amount
     }))
   }
 
@@ -215,7 +214,7 @@ class Game extends React.Component {
       if (gamePhase !== 'roundFinished') return {}
 
       return {
-        money       : roundToPrecision(money - bet.value,1),
+        money       : money - bet.value,
         lastBetIndex: bet.index,
         gamePhase   : 'prepareShuffling',
         round       : round + 1,
@@ -366,10 +365,10 @@ class Game extends React.Component {
     // money handling
     const {money, bet}  = this.state
     const win           = result === 'none' ? nullWin : this.props.wins[result]
-    const winAmount     = roundToPrecision(bet.value * win.multiplier, 1)
+    const winAmount     = bet.value * win.multiplier
     if (winAmount > 0) {
       this.setState( ({money}) => ({
-        money: roundToPrecision(money + winAmount, 1)
+        money: money + winAmount
       }))
     } else if (money < bet.value) {
       // autolimit bet if low on money
@@ -446,9 +445,9 @@ class Game extends React.Component {
     const tablePlaceHolder            = document.querySelector('.placeHolder.table')
     const {top:tableTop}              = tablePlaceHolder.getBoundingClientRect()
     return {
-      deckLeft  : roundToPrecision(deckLeft, 2),
-      deckTop   : roundToPrecision(deckTop,  2),
-      tableTop  : roundToPrecision(tableTop, 2),
+      deckLeft  : deckLeft,
+      deckTop   : deckTop,
+      tableTop  : tableTop,
     }
   }
 
