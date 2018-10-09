@@ -483,7 +483,7 @@ class Game extends React.Component {
     return (
       <div className="cards">
         {this.state.deck.map( (card, index) => (
-          <Card card={card} key={card.toString()} domOrder={index} />
+          <Card card={card} key={card.id} domOrder={index} />
         ))}
       </div>
     )
