@@ -9,7 +9,7 @@ import {
   createBet,
   getKeyboardHandler,
 }                             from '../lib/helpers'
-import classify               from './classify'
+import classify               from '../lib/classify'
 import WinTable               from './WinTable'
 import Card                   from './Card'
 import StatusLine             from './Statusline'
