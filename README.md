@@ -9,6 +9,7 @@ A relatively current, possibly broken demo should be available at [https://poker
   * To facilitate time travel etc, use redux in game module
     * The game module itself would have little reason not to shuffle the actual deck instead of a separate order array
     * Maybe render dummy cards for those that are not part of the deal, and only render the top 8 cards with real card values...
+    * Separate module?
 * Performance
   * Use end of animation and transition events with requestAnimationFrame to trigger phase changes, and only use time as a fallback
     * Singleton handler that keeps track of all started transitions and animations
@@ -32,3 +33,7 @@ A relatively current, possibly broken demo should be available at [https://poker
   * Probabilities other than for pair 10-A should be working, but a simple test for that is difficult.
   * Especially if unnecessarily sorting hands for every test in classify is removed, it may well be faster to just brute force the possible combinations than to run currently existing individual tests.
 * Testing
+* Game module:
+  * Result does not depend on previous state. Should it even be a part of state? Obviously knowledge of last bet needs to be there, but the result does not. Maybe move to resources? (Rename it?)
+  * Use reselect?
+  * Reimplement bet logic a more redux-friendly fashion
