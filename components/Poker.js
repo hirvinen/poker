@@ -171,7 +171,7 @@ class Game extends React.Component {
     }))
   }
 
-  addJokerRounds (count = 10) {
+  addJokerRounds (count = 1) {
     this.setState( ({jokerRounds}) => ({
       jokerRounds: jokerRounds + count
     }))
@@ -381,7 +381,7 @@ class Game extends React.Component {
     const {jokerInDeck, jokerRounds} = this.state
     // on straight or better, add Joker rounds unless Joker was in play
     if (win.multiplier >= 11 && !jokerInDeck) {
-      this.addJokerRounds()
+      this.addJokerRounds(10)
     }
     // Queue removing Joker from the deck if this was the last joker round
     if (jokerInDeck && jokerRounds === 0) {
@@ -419,7 +419,7 @@ class Game extends React.Component {
       }
       
       return false
-    case 'addJokerRounds'       : return this.addJokerRounds(),       true
+    case 'addJokerRounds'       : return this.addJokerRounds(1),       true
     case 'addJokerToDeck'       : return this.addJokerToDeck(),       true
     case 'removeJokerFromDeck'  : return this.removeJokerFromDeck(),  true
     case 'addMoney'             : return this.addMoney(),             true
