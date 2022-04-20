@@ -14,6 +14,7 @@ import WinTable               from './WinTable'
 import Card                   from './Card'
 import StatusLine             from './Statusline'
 import ControlButton          from './ControlButton'
+import CardPlaceHolders       from './CardPlaceHolders'
 
 const PokerTitle = () => <div className="title">QuickPoker</div>
 const PokerInfo  = ({instruction}) => (
@@ -497,19 +498,6 @@ class Game extends React.Component {
     )
   }
 
-  renderCardPlaceHolders () {
-    return (
-      <React.Fragment>
-        <div className="placeHolder deck"  style={{ "--card-order": 0 }} />
-        <div className="placeHolder table" style={{ "--card-order": 0 }} />
-        <div className="placeHolder table" style={{ "--card-order": 1 }} />
-        <div className="placeHolder table" style={{ "--card-order": 2 }} />
-        <div className="placeHolder table" style={{ "--card-order": 3 }} />
-        <div className="placeHolder table" style={{ "--card-order": 4 }} />
-      </React.Fragment>
-    )
-  }
-
   renderAddingJoker () {
     return <Card card={{...Joker, order: 0, position:'joker'}} />
   }
@@ -557,8 +545,7 @@ class Game extends React.Component {
           result={this.state.result}
           lastBetIndex={this.state.lastBetIndex}
         />
-        {this.renderCards()}
-        {this.renderCardPlaceHolders()}
+        <CardPlaceHolders />
         {this.state.jokerAdded && this.renderAddingJoker()}
         {this.renderControls()}
         {this.state.debugMode && <div id="test" style={{"--card-order":0}}>{this.state.gamePhase}</div> }
