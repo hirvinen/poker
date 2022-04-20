@@ -479,7 +479,7 @@ body {
 }
 
 /* joker initially hidden position */
-.jokerRemoved,
+.card.jokerRemoved,
 .card.hidden.initiallyHidden {
   top     : var(--deck-top);
   left    : 100vw;
