@@ -151,7 +151,6 @@ class Game extends React.Component {
     this.finishDealingAfterDelay= (delay=defaultDelay) => setTimeout(this.finishDealing, delay)
     this.handleResult           = this.handleResult.bind(this)
     this.handleResultAfterDelay = (delay=defaultDelay) => setTimeout(this.handleResult, delay)
-    this.getTableAndDeckPositions = this.getTableAndDeckPositions.bind(this)
 
   }
 
