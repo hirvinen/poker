@@ -15,6 +15,7 @@ import Card                   from './Card'
 import StatusLine             from './Statusline'
 import ControlButton          from './ControlButton'
 import CardPlaceHolders       from './CardPlaceHolders'
+import Cards                  from './Cards'
 
 const PokerTitle = () => <div className="title">QuickPoker</div>
 const PokerInfo  = ({instruction}) => (
@@ -479,25 +480,6 @@ class Game extends React.Component {
     window.removeEventListener('resize', this.handleResize)
   }
  
- /*
-  UPDATE: To avoid shuffling DOM nodes around, decouple deck order and DOM order.
-    * shuffle an array orderArray containing numbers from 0 to 51 inclusive (52 if Joker in deck)
-    * Assign each card = deck[i] an order value of orderArray[i]
-      * For order <= 7, set position and new order
-        * (0,1)   : newOrder = (0,1)
-        * (2,3,4) : newOrder = (2,3,4), tablePosition = left
-        * (5,6,7) : newOrder = (2,3,4), tablePosition = right
- */
-  renderCards () {
-    return (
-      <div className="cards">
-        {this.state.deck.map( (card, index) => (
-          <Card card={card} key={card.toString()} domOrder={index} />
-        ))}
-      </div>
-    )
-  }
-
   renderAddingJoker () {
     return <Card card={{...Joker, order: 0, position:'joker'}} />
   }
@@ -545,6 +527,7 @@ class Game extends React.Component {
           result={this.state.result}
           lastBetIndex={this.state.lastBetIndex}
         />
+        <Cards deck={this.state.deck} />
         <CardPlaceHolders />
         {this.state.jokerAdded && this.renderAddingJoker()}
         {this.renderControls()}
