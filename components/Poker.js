@@ -186,6 +186,7 @@ class Game extends React.Component {
     if (!this.state.jokerInDeck) {
       this.setState( ({deck}) => ({
         jokerInDeck : true,
+        jokerAdded  : true,
         deck        : [
           ...deck.slice(0,-1),
           {...Joker, position: 'jokerAdded', order: deck.length - 1, show: true}
@@ -378,7 +379,14 @@ class Game extends React.Component {
       }))
     }
 
-    const {jokerInDeck, jokerRounds} = this.state
+    const {jokerInDeck, jokerRounds, jokerAdded, removeJoker} = this.state
+    // Turn off possible joker adding or removing animation
+    if (jokerAdded) {
+      this.setState({jokerAdded : false})
+    }
+    if (removeJoker) {
+      this.setState({removeJoker : false})
+    }
     // on straight or better, add Joker rounds unless Joker was in play
     if (win.multiplier >= 11 && !jokerInDeck) {
       this.addJokerRounds(10)
