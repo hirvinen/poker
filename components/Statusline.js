@@ -1,3 +1,4 @@
+import React from 'react'
 const StatusLine = ({money, jokerRounds}) => (
     <React.Fragment>
       <div className="money">€&nbsp;{money.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>

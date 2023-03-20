@@ -1,6 +1,7 @@
 const shuffle = require('lodash/shuffle')
 const map = require('lodash/map')
 
+import React                  from 'react'
 import {createDeck, Joker}    from '../lib/deck'
 import {wins, nullWin}        from '../lib/quick_poker'
 import {
