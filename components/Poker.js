@@ -80,7 +80,7 @@ class Game extends React.Component {
     }
 
     this.instructionMap = {
-      'roundFinished' : 'Click deck to deal or increase bet.',
+      'roundFinished' : 'Begin game by choosing deal or increase bet.',
       'handDealt'     : 'Select left or right stack',
       'left'          : 'Analyzing hand results',
       'right'         : 'Analyzing hand results',
