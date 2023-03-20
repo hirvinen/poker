@@ -515,7 +515,7 @@ class Game extends React.Component {
         }}
         >
         <PokerTitle />
-        {/* <PokerInfo instruction={this.instructionMap[this.state.gamePhase]} /> */}
+        <PokerInfo instruction={this.instructionMap[this.state.gamePhase]} />
         <StatusLine
           money={this.state.money}
           jokerRounds={this.state.jokerRounds}
