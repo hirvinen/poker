@@ -1,7 +1,7 @@
 {
   "name": "poker",
   "version": "1.0.0",
-  "description": "A simple poker game in React Native Web",
+  "description": "A simple poker game in React",
   "main": "index.js",
   "scripts": {
     "test": "xo",
@@ -17,7 +17,6 @@
     "poker",
     "game",
     "react",
-    "react-native-web",
     "next"
   ],
   "author": "Patrik Hirvinen <patrik.hirvinen@iki.fi>",
