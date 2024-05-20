@@ -1,7 +1,9 @@
 # poker
 
 A simple poker game, that should at some point be an offline-first PWA using React and Next.js
-A relatively current, possibly broken demo should be available at [https://poker.hirvinen.fi/](https://poker.hirvinen.fi/)
+A relatively current, possibly broken demo should be available at [https://poker-pi.vercel.app/](https://poker-pi.vercel.app/).
+
+The game is kind of abandoned due to other priorities.
 
 ## ToDo
 
