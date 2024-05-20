@@ -27,7 +27,7 @@
   "homepage": "https://github.com/hirvinen/poker#readme",
   "dependencies": {
     "lodash": "^4.17.11",
-    "next": "^13.2.4",
+    "next": "^14",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
@@ -37,7 +37,7 @@
     "eslint-config-xo-react": "^0.16.0",
     "eslint-config-xo-space": "^0.18.0",
     "eslint-plugin-react": "^7.11.1",
-    "xo": "^0.53.1"
+    "xo": "^0.58.0"
   },
   "xo": {
     "space": true,
